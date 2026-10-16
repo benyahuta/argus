@@ -123,6 +123,7 @@ def shap_summary():
     Xs = pd.read_parquet(ARTIFACTS / "shap_sample.parquet").drop(columns=["label", "score"])
     if "specialty_cat" in Xs:
         Xs["specialty_cat"] = Xs["specialty_cat"].cat.codes
+    Xs.columns = [PRETTY.get(c, c) for c in Xs.columns]
     plt.figure()
     shap.summary_plot(sv, Xs, max_display=15, show=False, plot_size=(7.5, 5.5))
     fig = plt.gcf()
@@ -234,6 +235,72 @@ def em_upcoding():
     save(fig, "em_upcoding.png")
 
 
+PRETTY = {
+    "peer_z_log_pay_per_bene": "payment per patient vs. peers (z)",
+    "peer_z_srv_per_bene": "services per patient vs. peers (z)",
+    "svc_intensity_excess": "per-code intensity vs. peers (log ratio)",
+    "em_est_share_level45": "share of office visits billed level 4–5",
+    "peer_z_em_est_share_level45": "level 4–5 visit share vs. peers (z)",
+    "rx_opioid_share": "opioid share of prescriptions",
+    "peer_z_rx_opioid_share": "opioid share vs. peers (z)",
+    "mismatch_surprise": "code mix unlike declared specialty",
+    "charge_markup": "charge / allowed markup",
+    "log_pay_per_bene": "log payment per patient",
+    "specialty_cat": "specialty",
+    "svc_pay_excess": "allowed price per code vs. peers",
+    "svc_facility_share": "share of payments in facility settings",
+    "rx_lis_claim_share": "low-income-subsidy share of prescriptions",
+    "rx_claims_per_bene": "prescriptions per patient",
+    "bene_avg_age": "average patient age",
+    "bene_dual_share": "dual-eligible patient share",
+    "bene_under65_share": "under-65 (disabled) patient share",
+    "bene_risk_score": "patient risk score",
+    "is_organization": "is an organization",
+    "log_benes": "log number of patients",
+    "log_payment": "log total payment",
+    "log_services": "log total services",
+    "srv_per_bene": "services per patient",
+    "svc_top_code_share": "share of payment from top code",
+    "svc_pay_hhi": "payment concentration (HHI)",
+    "svc_rare_code_pay_share": "payment share from rare codes",
+    "rx_log_cost_per_claim": "log drug cost per prescription",
+    "rx_brand_claim_share": "brand-name share of prescriptions",
+    "rx_opioid_la_share": "long-acting opioid share",
+    "rx_present": "prescribes under Part D",
+    "peer_group_log_size": "log size of specialty peer group",
+    "ruca_code": "rurality (RUCA)",
+    "drug_pay_share": "drug share of Part B payment",
+    "codes_per_bene": "distinct codes per patient",
+}
+
+
+def case_study():
+    """Anonymized explanation for the highest-ranked test provider who was later excluded."""
+    import shap
+    sv = np.load(ARTIFACTS / "shap_values.npy")
+    S = pd.read_parquet(ARTIFACTS / "shap_sample.parquet")
+    X = S.drop(columns=["label", "score"])
+    import lightgbm as lgb
+    pos = np.flatnonzero(S["label"].to_numpy() == 1)
+    i = pos[np.argmax(S["score"].to_numpy()[pos])]
+    data = X.iloc[i].astype(object).to_numpy()
+    names = [PRETTY.get(c, c) for c in X.columns]
+    base = np.mean([shap.TreeExplainer(lgb.Booster(model_file=str(f))).expected_value
+                    for f in sorted(ARTIFACTS.glob("lgbm_seed*.txt"))])
+    # Values rounded to 2 significant figures so the public files can't be searched for an exact
+    # match (re-identification).
+    data = np.array([v if isinstance(v, str) else float(f"{float(v):.2g}") for v in data],
+                    dtype=object)
+    ex = shap.Explanation(values=sv[i], base_values=float(base), data=data, feature_names=names)
+    plt.figure()
+    shap.plots.waterfall(ex, max_display=10, show=False)
+    fig = plt.gcf()
+    fig.set_size_inches(8, 5)
+    fig.axes[0].set_title("Why one later-excluded provider ranked near the top "
+                          "(log-odds contributions)", loc="left", fontsize=11)
+    save(fig, "case_study.png")
+
+
 def main():
     res = json.loads((REPORTS / "results.json").read_text())
     df = pl.read_parquet(ARTIFACTS / "test_scores.parquet").to_pandas()
@@ -246,6 +313,7 @@ def main():
     lead_time(df)
     em_upcoding()
     shap_summary()
+    case_study()
 
 
 if __name__ == "__main__":

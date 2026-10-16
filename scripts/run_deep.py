@@ -9,7 +9,9 @@ and reports/deep_results.json.
 from __future__ import annotations
 
 import json
+import os
 import time
+from types import SimpleNamespace
 
 import numpy as np
 import polars as pl
@@ -23,6 +25,11 @@ PROV_COLS = ["log_benes", "log_payment", "log_pay_per_bene", "log_n_codes", "ben
              "is_organization", "rx_present", "rx_log_claims", "rx_opioid_share",
              "charge_markup"]
 N_AUX = 80
+# Regularised for ~700 positives: small model, heavy dropout, few positive repeats.
+MODEL_KW = dict(d=64, layers=2, dropout=0.3)
+FIT_KW = dict(pos_repeat=3, neg_per_epoch=300_000, lr=5e-4)
+EPOCHS = int(os.environ.get("EPOCHS", 10))
+PHASE1_ONLY = os.environ.get("PHASE1_ONLY") == "1"
 T0 = time.time()
 
 
@@ -30,7 +37,8 @@ def log(m):
     print(f"[{time.time() - T0:6.0f}s] {m}", flush=True)
 
 
-def main() -> None:
+def prepare() -> SimpleNamespace:
+    """Line tensors + per-row metadata for every row of dataset.parquet (grouped by year)."""
     ds = pl.read_parquet(INTERIM / "dataset.parquet")
     years = sorted(ds["year"].unique().to_list())
     train_years = [c.feature_year for c in EXP.train]
@@ -39,13 +47,10 @@ def main() -> None:
     vocab = build_vocab([svcs[y] for y in train_years])
     log(f"vocab: {len(vocab):,} HCPCS codes")
 
-    parts, offsets = [], {}
-    start = 0
+    parts = []
     for y in years:
         sub = ds.filter(pl.col("year") == y)
         parts.append(line_tensors(svcs[y], sub["npi"].to_list(), vocab))
-        offsets[y] = (start, start + sub.height)
-        start += sub.height
         log(f"  lines {y}: {sub.height:,} providers")
     del svcs
     lt = LineTensors(*(np.concatenate([getattr(p, f) for p in parts])
@@ -70,24 +75,34 @@ def main() -> None:
     y = ds["label"].to_numpy().astype(np.int64)
     split = ds["split"].to_numpy()
     idx = {k: np.flatnonzero(split == k) for k in ("train", "valid", "test")}
+    return SimpleNamespace(ds=ds, lt=lt, spec=spec, aux=aux, prov=prov, y=y, idx=idx,
+                           n_codes=len(vocab) + 3, n_spec=len(specialties), vocab=vocab)
 
-    out = {"vocab_size": len(vocab), "phase1": [], "phase2": []}
-    n_codes = len(vocab) + 3
+
+def main() -> None:
+    d = prepare()
+    ds, lt, spec, aux, prov, y, idx = d.ds, d.lt, d.spec, d.aux, d.prov, d.y, d.idx
+    n_codes, specialties = d.n_codes, range(d.n_spec)
+    out = {"vocab_size": len(d.vocab), "phase1": [], "phase2": []}
 
     log("phase 1: select epochs on validation")
-    tr = Trainer(lt, spec, aux, prov, n_codes, len(specialties), N_AUX, seed=0, log=log)
-    hist = tr.fit(idx["train"], y, idx["valid"], y[idx["valid"]], epochs=14)
+    tr = Trainer(lt, spec, aux, prov, n_codes, len(specialties), N_AUX, seed=0, log=log,
+                 **MODEL_KW)
+    hist = tr.fit(idx["train"], y, idx["valid"], y[idx["valid"]], epochs=EPOCHS, **FIT_KW)
     out["phase1"] = hist
     best_epoch = int(max(hist, key=lambda r: r["valid_ap"])["epoch"])
     out["best_epoch"] = best_epoch
     log(f"best epoch {best_epoch}")
+    if PHASE1_ONLY:
+        return
 
     log("phase 2: refit on train+valid, 3 seeds")
     trva = np.concatenate([idx["train"], idx["valid"]])
     preds = []
     for seed in range(3):
-        t = Trainer(lt, spec, aux, prov, n_codes, len(specialties), N_AUX, seed=seed, log=log)
-        out["phase2"].append(t.fit(trva, y, epochs=max(best_epoch, 4)))
+        t = Trainer(lt, spec, aux, prov, n_codes, len(specialties), N_AUX, seed=seed, log=log,
+                    **MODEL_KW)
+        out["phase2"].append(t.fit(trva, y, epochs=max(best_epoch, 2), **FIT_KW))
         preds.append(t.predict(idx["test"]))
         p = preds[-1]
         log(f"  seed {seed}: test AP={average_precision_score(y[idx['test']], p):.4f}")

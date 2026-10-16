@@ -111,12 +111,15 @@ class ClaimSetTransformer(nn.Module):
         self.fraud_head = nn.Sequential(
             nn.Linear(d + 16 + n_prov + 1, d), nn.GELU(), nn.Dropout(dropout), nn.Linear(d, 1))
 
-    def forward(self, codes, pos, num, mask, spec, prov, aux_target=None):
+    def encode(self, codes, pos, num, mask):
         x = self.code(codes) + self.pos(pos.long()) + self.num(num)
         x = self.encoder(self.norm(x), src_key_padding_mask=~mask)
         w = self.attn_pool(x).squeeze(-1).masked_fill(~mask, -1e4).softmax(-1)
         h = (w.unsqueeze(-1) * x).sum(1)
-        aux_logits = self.aux_head(h)
+        return h, self.aux_head(h)
+
+    def forward(self, codes, pos, num, mask, spec, prov, aux_target=None):
+        h, aux_logits = self.encode(codes, pos, num, mask)
         # Surprise of the declared specialty under the code-mix model (detached so the
         # fraud loss cannot distort the specialty classifier).
         if aux_target is not None:
@@ -136,13 +139,13 @@ def _batches(idx: np.ndarray, bs: int):
 class Trainer:
     def __init__(self, lt: LineTensors, spec: np.ndarray, aux: np.ndarray, prov: np.ndarray,
                  n_codes: int, n_specialties: int, n_aux: int, device: str | None = None,
-                 seed: int = 0, log=print):
+                 seed: int = 0, log=print, **model_kw):
         self.lt, self.spec, self.aux, self.prov = lt, spec, aux, prov
         self.device = device or ("mps" if torch.backends.mps.is_available() else "cpu")
         torch.manual_seed(seed)
         self.rng = np.random.default_rng(seed)
-        self.model = ClaimSetTransformer(n_codes, n_specialties, n_aux, prov.shape[1]) \
-            .to(self.device)
+        self.model = ClaimSetTransformer(n_codes, n_specialties, n_aux, prov.shape[1],
+                                         **model_kw).to(self.device)
         self.log = log
 
     def _tensors(self, b: np.ndarray):
@@ -165,9 +168,23 @@ class Trainer:
             out.append(logit.float().cpu().numpy())
         return np.concatenate(out)
 
+    @torch.no_grad()
+    def embed(self, idx: np.ndarray, bs: int = 4096) -> tuple[np.ndarray, np.ndarray]:
+        """Pooled code-mix embedding and specialty surprise for each provider."""
+        self.model.eval()
+        hs, sur = [], []
+        for b in _batches(idx, bs):
+            c, p, n, m, s, pv, a = self._tensors(b)
+            h, aux_logits = self.model.encode(c, p, n, m)
+            hs.append(h.float().cpu().numpy())
+            sur.append((-aux_logits.log_softmax(-1).gather(1, a[:, None])).squeeze(1)
+                       .float().cpu().numpy())
+        return np.concatenate(hs), np.concatenate(sur)
+
     def fit(self, train_idx: np.ndarray, y: np.ndarray, valid_idx: np.ndarray | None = None,
             y_valid: np.ndarray | None = None, epochs: int = 12, neg_per_epoch: int = 200_000,
-            pos_repeat: int = 20, bs: int = 1024, lr: float = 1e-3, aux_weight: float = 0.3):
+            pos_repeat: int = 20, bs: int = 1024, lr: float = 1e-3, aux_weight: float = 0.3,
+            fraud_weight: float = 1.0):
         pos_idx = train_idx[y[train_idx] == 1]
         neg_idx = train_idx[y[train_idx] == 0]
         steps_per_epoch = math.ceil((neg_per_epoch + pos_repeat * len(pos_idx)) / bs)
@@ -175,7 +192,7 @@ class Trainer:
         sched = torch.optim.lr_scheduler.OneCycleLR(opt, lr, total_steps=epochs * steps_per_epoch,
                                                     pct_start=0.1)
         # Negatives are subsampled; reweight them so the loss matches the full data.
-        neg_w = len(neg_idx) / neg_per_epoch / pos_repeat
+        neg_w = len(neg_idx) / neg_per_epoch / max(pos_repeat, 1)
         history, best_state, best_ap = [], None, -1.0
         for ep in range(epochs):
             t = time.time()
@@ -189,7 +206,7 @@ class Trainer:
                 yb = torch.from_numpy(y[b]).float().to(self.device)
                 logit, aux_logits = self.model(c, p, n, m, s, pv, a)
                 w = torch.where(yb > 0, 1.0, neg_w)
-                loss = (F.binary_cross_entropy_with_logits(logit, yb, weight=w).mean()
+                loss = (fraud_weight * F.binary_cross_entropy_with_logits(logit, yb, weight=w)
                         / (neg_w + 1) + aux_weight * F.cross_entropy(aux_logits, a))
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
@@ -198,7 +215,7 @@ class Trainer:
                 sched.step()
                 tot += loss.item()
             row = {"epoch": ep + 1, "loss": tot / steps_per_epoch}
-            if valid_idx is not None:
+            if valid_idx is not None and fraud_weight > 0:
                 row["valid_ap"] = float(average_precision_score(y_valid, self.predict(valid_idx)))
                 if row["valid_ap"] > best_ap:
                     best_ap = row["valid_ap"]

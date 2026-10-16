@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medicare Fraud Forecasting</title>
+<meta name="description" content="Forecasting OIG exclusions of Medicare providers from public billing data, with an audit-budget explorer and a fairness trade-off.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --surface: #fcfcfb; --surface-2: #f4f3f0; --line: #e6e5e0;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #8a8984;
+  --ours: #2a78d6; --ours-soft: #cde2fb; --s2: #eb6834; --s3: #1baf7a;
+  --base-1: #52514e; --base-2: #8a8984; --base-3: #b5b4ae;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface: #1a1a19; --surface-2: #242423; --line: #34332f;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #8f8e86;
+    --ours: #3987e5; --ours-soft: #1c3a5e; --s2: #d95926; --s3: #199e70;
+    --base-1: #c3c2b7; --base-2: #8f8e86; --base-3: #5f5e58;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #1a1a19; --surface-2: #242423; --line: #34332f;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #8f8e86;
+  --ours: #3987e5; --ours-soft: #1c3a5e; --s2: #d95926; --s3: #199e70;
+  --base-1: #c3c2b7; --base-2: #8f8e86; --base-3: #5f5e58;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface); color: var(--ink);
+  font: 16px/1.55 Inter, system-ui, -apple-system, sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 48px 16px 80px; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.02em; }
+h2 { font-size: 22px; margin: 56px 0 6px; letter-spacing: -0.01em; }
+.lede { font-size: 18px; color: var(--ink-2); max-width: 720px; margin: 0; }
+.sub { color: var(--ink-2); margin: 0 0 18px; max-width: 720px; }
+.links { margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 15px; }
+a { color: var(--ours); text-decoration: none; } a:hover { text-decoration: underline; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 32px; }
+.kpi { background: var(--surface-2); border-radius: 12px; padding: 16px 18px; }
+.kpi .v { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: 13.5px; color: var(--ink-2); line-height: 1.4; }
+.panel { background: var(--surface-2); border-radius: 14px; padding: 20px; }
+.controls { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; margin-bottom: 14px; font-size: 14px; color: var(--ink-2); }
+.controls label { display: flex; align-items: center; gap: 10px; }
+input[type=range] { width: min(320px, 60vw); accent-color: var(--ours); }
+select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.readout div { background: var(--surface); border-radius: 10px; padding: 10px 12px; }
+.readout b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.readout span { font-size: 12.5px; color: var(--ink-2); }
+svg text { fill: var(--ink-2); font: 12px Inter, system-ui, sans-serif; }
+svg .grid { stroke: var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin-top: 8px; }
+.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 4px 16px rgba(0,0,0,.12); display: none; z-index: 5; }
+.note { font-size: 13.5px; color: var(--ink-2); margin-top: 10px; }
+.cols { display: block; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+ul.tight { padding-left: 20px; color: var(--ink-2); } ul.tight li { margin: 6px 0; }
+footer { margin-top: 64px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Forecasting Medicare fraud exclusions from public billing data</h1>
+  <p class="lede">A model that reads one year of a provider's public Medicare billing and ranks who is likely to be
+    excluded by the HHS Inspector General for fraud or abuse in the next three years. It is evaluated strictly forward in time
+    on 1.2M providers, and audited for who it wrongly flags.</p>
+  <div class="links">
+    <a href="https://github.com/benyahuta/medicare-fraud-forecasting">Code &amp; write-up on GitHub →</a>
+    <a href="https://github.com/benyahuta/medicare-fraud-forecasting/blob/main/MODEL_CARD.md">Model card</a>
+  </div>
+  <div class="kpis" id="kpis"></div>
+
+  <h2>Audit-budget explorer</h2>
+  <p class="sub">Investigators can only review a small fraction of providers. Pick a budget and see how many of the providers OIG
+    went on to exclude in 2022–24 would have been in the review queue, based only on their 2021 billing.</p>
+  <div class="panel">
+    <div class="controls">
+      <label>Review <input id="budget" type="range" min="0" max="119" value="60"> <b id="budgetLabel"></b> of providers</label>
+      <label>Model <select id="model"></select></label>
+    </div>
+    <div class="readout" id="readout"></div>
+    <div id="recallChart"></div>
+    <div class="legend" id="recallLegend"></div>
+  </div>
+
+  <h2>Who gets wrongly flagged?</h2>
+  <p class="sub">At a 1% budget, the raw model's false alarms land more often on providers serving low-income and disabled patients.
+    Removing patient demographics doesn't fix this, because billing patterns act as proxies. <b>Stratified allocation</b> splits the
+    review budget evenly across patient-mix groups. Slide to see what that costs in recall.</p>
+  <div class="panel">
+    <div class="controls">
+      <label>Stratification α <input id="alpha" type="range" min="0" max="10" value="0"> <b id="alphaLabel"></b></label>
+      <span id="alphaRecall"></span>
+    </div>
+    <div id="fairChart"></div>
+    <p class="note">Bars show each group's false-positive rate divided by the overall false-positive rate. 1.0 = parity.
+      α = 0 is the raw model ranking; α = 1 reviews every patient-mix stratum at the same rate.</p>
+  </div>
+
+  <div class="cols">
+    <div>
+      <h2>What the model relies on</h2>
+      <p class="sub">Test average precision when each feature group is removed (3-seed LightGBM).</p>
+      <div class="panel"><div id="ablChart"></div></div>
+    </div>
+    <div id="rollingWrap">
+      <h2>Does it hold up over time?</h2>
+      <p class="sub">One model per test year, each trained only on exclusions published before that year.</p>
+      <div class="panel"><div id="rollChart"></div><div class="legend" id="rollLegend"></div></div>
+    </div>
+  </div>
+
+  <h2>How it works</h2>
+  <ul class="tight">
+    <li><b>Data:</b> CMS Medicare Physician &amp; Other Practitioners (by provider and by provider × service code), Part D Prescribers, 2016–2022:
+      ~4.5M provider-years and ~70M billing lines. Labels come from the OIG List of Excluded Individuals/Entities.</li>
+    <li><b>Features (~110):</b> volume and markup, patient mix, peer-relative z-scores within specialty × year, per-code intensity vs. peers,
+      E/M level distribution (an upcoding signal), opioid and brand-drug prescribing, and a "does this code mix look like the declared specialty?" model.</li>
+    <li><b>Evaluation:</b> train on 2016–17 (+2019 for the final refit), test on 2021 → exclusions 2022–24. No test-period label is ever seen in training.</li>
+    <li><b>Neural comparison:</b> a set-transformer over each provider's raw billing lines, trained end-to-end and as a self-supervised feature extractor for LightGBM.</li>
+    <li><b>Limits:</b> exclusion ≠ fraud. The labels only reflect who was caught. The scores are for prioritizing human review, never for accusing anyone. No per-provider scores are published.</li>
+  </ul>
+  <footer>Built by Ben Guettler · data: CMS &amp; HHS-OIG public files · <a href="https://github.com/benyahuta/medicare-fraud-forecasting">source</a></footer>
+</main>
+<div class="tip" id="tip"></div>
+<script src="data.js"></script>
+<script>
+const R = window.RESULTS;
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const OURS = "LightGBM (ours)";
+const STYLE = {
+  "LightGBM (ours)": {c: "--ours", w: 2.6, d: ""},
+  "Logistic regression": {c: "--base-1", w: 1.6, d: ""},
+  "Isolation Forest": {c: "--base-2", w: 1.6, d: "6 4"},
+  "Peer payment rule": {c: "--base-3", w: 1.6, d: "2 3"},
+};
+const pct = (x, d = 0) => (100 * x).toFixed(d) + "%";
+const money = x => x >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? "$" + (x / 1e6).toFixed(1) + "M" : "$" + Math.round(x / 1e3) + "K";
+const budgetPct = b => (b * 100 < 0.1 ? (b * 100).toFixed(2) : b * 100 < 1 ? (b * 100).toFixed(1) : (b * 100).toFixed(b * 100 < 10 ? 1 : 0)) + "%";
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function svgBox(host, h) { host.innerHTML = ""; const w = host.clientWidth || 600; const s = el("svg", {viewBox: `0 0 ${w} ${h}`, width: "100%", height: h}, host); return [s, w]; }
+const tip = document.getElementById("tip");
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = "block"; tip.style.left = Math.min(e.clientX + 14, innerWidth - 240) + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+function hideTip() { tip.style.display = "none"; }
+
+// KPIs ------------------------------------------------------------------
+function kpis() {
+  const m = R.models[OURS], imp = R.impact["1pct"] || {};
+  const lead = (R.impact.lead_time_months_at_1pct || {}).median;
+  const items = [
+    [pct(m["recall@1pct"]), "of future exclusions caught by reviewing the top 1% of providers"],
+    [m["lift@1pct"].toFixed(0) + "×", "more hits per review than random selection at 1%"],
+    [imp.their_payments ? money(imp.their_payments) : "–", "2021 Medicare payments to flagged providers who were later excluded"],
+    [lead ? Math.round(lead) + " mo" : "–", "median warning before exclusion (flagged cases)"],
+  ];
+  document.getElementById("kpis").innerHTML = items.map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+}
+
+// Recall vs budget --------------------------------------------------------
+const budgetEl = document.getElementById("budget"), modelEl = document.getElementById("model");
+Object.keys(R.models).forEach(m => modelEl.add(new Option(m, m)));
+function recallChart() {
+  const host = document.getElementById("recallChart");
+  const [s, W] = svgBox(host, 300); const H = 300, L = 46, Rr = 16, T = 12, B = 36;
+  const bs = R.models[OURS].curve.map(p => p.b);
+  const x = b => L + (Math.log10(b) - Math.log10(bs[0])) / (Math.log10(bs[bs.length - 1]) - Math.log10(bs[0])) * (W - L - Rr);
+  const ymax = Math.min(1, Math.max(...Object.values(R.models).map(m => m.curve[m.curve.length - 1].recall)) * 1.1);
+  const y = v => T + (1 - v / ymax) * (H - T - B);
+  for (let i = 0; i <= 4; i++) { const v = ymax * i / 4; el("line", {x1: L, x2: W - Rr, y1: y(v), y2: y(v), class: "grid"}, s); el("text", {x: L - 8, y: y(v) + 4, "text-anchor": "end"}, s).textContent = pct(v); }
+  [0.001, 0.01, 0.1].forEach(b => { if (b < bs[0]) return; el("line", {x1: x(b), x2: x(b), y1: T, y2: H - B, class: "grid"}, s); el("text", {x: x(b), y: H - B + 18, "text-anchor": "middle"}, s).textContent = budgetPct(b); });
+  el("text", {x: (L + W) / 2, y: H - 4, "text-anchor": "middle"}, s).textContent = "share of providers reviewed (log scale)";
+  const order = Object.keys(R.models).filter(m => m !== OURS).concat([OURS]);
+  for (const m of order) {
+    const st = STYLE[m] || {c: "--base-2", w: 1.5, d: ""};
+    const d = R.models[m].curve.map((p, i) => (i ? "L" : "M") + x(p.b).toFixed(1) + "," + y(p.recall).toFixed(1)).join("");
+    el("path", {d, fill: "none", stroke: css(st.c), "stroke-width": st.w, "stroke-dasharray": st.d, "stroke-linejoin": "round"}, s);
+  }
+  const i = +budgetEl.value, b = bs[i];
+  el("line", {x1: x(b), x2: x(b), y1: T, y2: H - B, stroke: css("--ink-2"), "stroke-width": 1, "stroke-dasharray": "3 3"}, s);
+  const p = R.models[modelEl.value].curve[i];
+  el("circle", {cx: x(b), cy: y(p.recall), r: 5, fill: css(STYLE[modelEl.value]?.c || "--ours"), stroke: css("--surface"), "stroke-width": 2}, s);
+  const hit = el("rect", {x: L, y: T, width: W - L - Rr, height: H - T - B, fill: "transparent"}, s);
+  hit.addEventListener("mousemove", e => {
+    const r = s.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width);
+    let j = 0, best = 1e9; bs.forEach((bb, k) => { const dd = Math.abs(x(bb) - px); if (dd < best) { best = dd; j = k; } });
+    showTip(e, `<b>Review ${budgetPct(bs[j])}</b><br>` + order.slice().reverse().map(m => `${m}: ${pct(R.models[m].curve[j].recall)}`).join("<br>"));
+  });
+  hit.addEventListener("mouseleave", hideTip);
+  hit.addEventListener("click", e => { const r = s.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width); let j = 0, best = 1e9; bs.forEach((bb, k) => { const dd = Math.abs(x(bb) - px); if (dd < best) { best = dd; j = k; } }); budgetEl.value = j; update(); });
+  document.getElementById("recallLegend").innerHTML = Object.keys(R.models).map(m => `<span><i style="background:${css((STYLE[m] || {}).c || "--base-2")}"></i>${m}</span>`).join("");
+}
+function update() {
+  const i = +budgetEl.value, p = R.models[modelEl.value].curve[i];
+  document.getElementById("budgetLabel").textContent = budgetPct(p.b);
+  document.getElementById("readout").innerHTML = [
+    [p.k.toLocaleString(), "providers reviewed"],
+    [`${p.hits} / ${R.positives}`, "later-excluded providers found"],
+    [pct(p.precision, 1), "of reviews are hits"],
+    [money(p.dollars), "2021 payments to those providers"],
+  ].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("");
+  recallChart();
+}
+budgetEl.addEventListener("input", update); modelEl.addEventListener("change", update);
+
+// Fairness -----------------------------------------------------------------
+const alphaEl = document.getElementById("alpha");
+function fairChart() {
+  const row = R.fairness[+alphaEl.value], groups = Object.keys(row.groups);
+  document.getElementById("alphaLabel").textContent = row.alpha.toFixed(1);
+  const r0 = R.fairness[0].recall;
+  document.getElementById("alphaRecall").innerHTML = `recall at 1%: <b>${pct(row.recall)}</b> (raw model ${pct(r0)})`;
+  const host = document.getElementById("fairChart");
+  const narrow = (host.clientWidth || 600) < 560;
+  const H = groups.length * 46 + 30; const [s, W] = svgBox(host, H);
+  const L = narrow ? 8 : 330, Rr = 50, T = narrow ? 18 : 6;
+  const xmax = Math.max(2.5, ...R.fairness.flatMap(f => Object.values(f.groups))) * 1.05;
+  const x = v => L + v / xmax * (W - L - Rr);
+  groups.forEach((g, k) => {
+    const yy = T + k * 46 + (narrow ? 14 : 8), v = row.groups[g];
+    el("text", {x: narrow ? L : L - 10, y: narrow ? yy - 4 : yy + 15, "text-anchor": narrow ? "start" : "end"}, s).textContent = g;
+    el("rect", {x: L, y: yy, width: Math.max(2, x(v) - L), height: 22, rx: 4, fill: css(v > 1.25 ? "--s2" : "--ours")}, s);
+    el("text", {x: x(v) + 6, y: yy + 15}, s).textContent = v.toFixed(2) + "×";
+  });
+  el("line", {x1: x(1), x2: x(1), y1: 0, y2: H - 10, stroke: css("--ink-2"), "stroke-dasharray": "3 3"}, s);
+  el("text", {x: x(1) + 4, y: H - 2}, s).textContent = "parity";
+}
+alphaEl.addEventListener("input", fairChart);
+
+// Ablation ---------------------------------------------------------------
+const NAMES = {volume: "volume & markup", bene: "patient mix", peer: "peer-relative", service: "per-code intensity", em: "E/M levels (upcoding)", mismatch: "specialty mismatch", rx: "Part D prescribing", meta: "specialty & geography"};
+function ablChart() {
+  const a = R.ablation, full = a["all features"];
+  const items = Object.entries(a).filter(([k]) => k !== "all features").map(([k, v]) => [k.startsWith("- ") ? "without " + (NAMES[k.slice(2)] || k.slice(2)) : "only summary file", v]).sort((p, q) => p[1] - q[1]);
+  const host = document.getElementById("ablChart"); const H = items.length * 30 + 30; const [s, W] = svgBox(host, H);
+  const L = Math.min(220, (host.clientWidth || 600) * 0.45), Rr = 60; const xmax = Math.max(full, ...items.map(i => i[1])) * 1.1; const x = v => L + v / xmax * (W - L - Rr);
+  items.forEach(([k, v], i) => { const yy = 6 + i * 30; el("text", {x: L - 8, y: yy + 14, "text-anchor": "end"}, s).textContent = k;
+    el("rect", {x: L, y: yy, width: Math.max(2, x(v) - L), height: 20, rx: 4, fill: css("--ours-soft")}, s);
+    el("text", {x: x(v) + 5, y: yy + 14}, s).textContent = ((v - full) / full * 100).toFixed(0) + "%"; });
+  el("line", {x1: x(full), x2: x(full), y1: 0, y2: H - 18, stroke: css("--ours"), "stroke-width": 2}, s);
+  el("text", {x: x(full), y: H - 4, "text-anchor": "middle"}, s).textContent = "all features AP " + full.toFixed(3);
+}
+
+// Rolling ----------------------------------------------------------------
+function rollChart() {
+  if (!R.rolling) { document.getElementById("rollingWrap").style.display = "none"; return; }
+  const host = document.getElementById("rollChart"); const H = 240; const [s, W] = svgBox(host, H);
+  const L = 44, Rr = 16, T = 10, B = 34; const yrs = [...new Set(R.rolling.map(r => r.test_year))];
+  const x = yv => L + (yrs.indexOf(yv) + 0.5) / yrs.length * (W - L - Rr);
+  const ymax = Math.max(...R.rolling.map(r => r.ci["recall@1pct"][1])) * 1.1; const y = v => T + (1 - v / ymax) * (H - T - B);
+  for (let i = 0; i <= 4; i++) { const v = ymax * i / 4; el("line", {x1: L, x2: W - Rr, y1: y(v), y2: y(v), class: "grid"}, s); el("text", {x: L - 6, y: y(v) + 4, "text-anchor": "end"}, s).textContent = pct(v); }
+  yrs.forEach(yv => { el("text", {x: x(yv), y: H - B + 18, "text-anchor": "middle"}, s).textContent = yv; });
+  el("text", {x: (L + W) / 2, y: H - 2, "text-anchor": "middle"}, s).textContent = "test year · y-axis: recall at 1% budget, 95% CI";
+  [["Peer payment rule", "--base-2"], [OURS, "--ours"]].forEach(([m, c], j) => {
+    const rr = R.rolling.filter(r => r.model === m); const off = (j - 0.5) * 10;
+    rr.forEach(r => { el("line", {x1: x(r.test_year) + off, x2: x(r.test_year) + off, y1: y(r.ci["recall@1pct"][0]), y2: y(r.ci["recall@1pct"][1]), stroke: css(c), "stroke-width": 2, opacity: .45}, s);
+      const dot = el("circle", {cx: x(r.test_year) + off, cy: y(r["recall@1pct"]), r: 5.5, fill: css(c), stroke: css("--surface"), "stroke-width": 2}, s);
+      dot.addEventListener("mousemove", e => showTip(e, `<b>${m}, ${r.test_year}</b><br>recall@1%: ${pct(r["recall@1pct"])}<br>AP: ${r.ap.toFixed(3)} · AUC: ${r.roc_auc.toFixed(3)}<br>${r.n_pos} positives`));
+      dot.addEventListener("mouseleave", hideTip); });
+  });
+  document.getElementById("rollLegend").innerHTML = `<span><i style="background:${css("--ours")}"></i>${OURS}</span><span><i style="background:${css("--base-2")}"></i>Peer payment rule</span>`;
+}
+
+function renderAll() { kpis(); update(); fairChart(); ablChart(); rollChart(); }
+renderAll();
+addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(renderAll, 120); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+</script>
+</body>
+</html>
