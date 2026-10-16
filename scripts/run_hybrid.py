@@ -12,15 +12,15 @@ from __future__ import annotations
 
 import json
 import time
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
-from run_deep import MODEL_KW, N_AUX, prepare
+import polars as pl
 from sklearn.decomposition import PCA
 from sklearn.metrics import average_precision_score
 
-from fraudml.config import ARTIFACTS, EXP, REPORTS
-from fraudml.deep import Trainer
+from fraudml.config import ARTIFACTS, EXP, INTERIM, REPORTS
 from fraudml.evaluate import paired_bootstrap_delta, summarize
 from fraudml.features import ALL_FEATURES
 from fraudml.models import fit_gbm_ensemble, predict_ensemble, to_pandas
@@ -34,6 +34,10 @@ def log(m):
 
 
 def encode(d, trva: np.ndarray):
+    from run_deep import MODEL_KW, N_AUX
+
+    from fraudml.deep import Trainer
+
     log("self-supervised encoder (specialty task only)")
     t = Trainer(d.lt, d.spec, d.aux, d.prov, d.n_codes, d.n_spec, N_AUX, seed=0, log=log,
                 **(MODEL_KW | {"d": 96, "layers": 3, "dropout": 0.1}))
@@ -46,15 +50,26 @@ def encode(d, trva: np.ndarray):
 
 
 def main() -> None:
-    d = prepare()
-    trva = np.concatenate([d.idx["train"], d.idx["valid"]])
     cache = ARTIFACTS / "nn_embeddings.npz"
-    if cache.exists():
-        c = np.load(cache, allow_pickle=True)
-        h, surprise, hist = c["h"], c["surprise"], list(c["hist"])
-    else:
+    # PyTorch is only imported when the encoder must be trained: loading its OpenMP runtime
+    # next to LightGBM's in one process segfaults on macOS.
+    if not cache.exists():
+        from run_deep import prepare
+
+        d = prepare()
+        trva = np.concatenate([d.idx["train"], d.idx["valid"]])
         h, surprise, hist = encode(d, trva)
         np.savez(cache, h=h, surprise=surprise, hist=np.array(hist, dtype=object))
+        del d
+    # Rows in the same (year-grouped) order prepare() used, without the line tensors.
+    ds = pl.read_parquet(INTERIM / "dataset.parquet")
+    ds = pl.concat([ds.filter(pl.col("year") == y) for y in sorted(ds["year"].unique())])
+    split = ds["split"].to_numpy()
+    idx = {k: np.flatnonzero(split == k) for k in ("train", "valid", "test")}
+    d = SimpleNamespace(ds=ds, idx=idx, y=ds["label"].to_numpy().astype(np.int64))
+    trva = np.concatenate([idx["train"], idx["valid"]])
+    c = np.load(cache, allow_pickle=True)
+    h, surprise, hist = c["h"].astype(np.float32), c["surprise"], list(c["hist"])
     pca = PCA(N_PCA, random_state=0).fit(h[trva])
 
     z = pca.transform(h)
@@ -66,7 +81,10 @@ def main() -> None:
 
     specialties = sorted(d.ds["specialty"].unique().to_list())
     X = to_pandas(d.ds, ALL_FEATURES, specialties)
-    Xh = pd.concat([X, emb], axis=1)
+    num = X.columns.drop("specialty_cat")
+    X[num] = X[num].astype(np.float32)
+    del h
+    Xh = pd.concat([X, emb.astype(np.float32)], axis=1)
     tuned = json.loads((REPORTS / "results.json").read_text())["tuning"]
     params = tuned["params"] | {"verbose": -1}
     n_iter = int(tuned["best_iter"] * 1.2)

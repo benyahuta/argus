@@ -47,7 +47,8 @@ a { color: var(--ours); text-decoration: none; } a:hover { text-decoration: unde
 .kpi .l { font-size: 13.5px; color: var(--ink-2); line-height: 1.4; }
 .panel { background: var(--surface-2); border-radius: 14px; padding: 20px; }
 .controls { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; margin-bottom: 14px; font-size: 14px; color: var(--ink-2); }
-.controls label { display: flex; align-items: center; gap: 10px; }
+.controls label { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 560px) { .controls label { width: 100%; } input[type=range] { width: 100%; } }
 input[type=range] { width: min(320px, 60vw); accent-color: var(--ours); }
 select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
@@ -93,16 +94,16 @@ footer { margin-top: 64px; font-size: 13px; color: var(--muted); }
   </div>
 
   <h2>Who gets wrongly flagged?</h2>
-  <p class="sub">At a 1% budget, the raw model's false alarms land more often on providers serving low-income and disabled patients.
-    Removing patient demographics doesn't fix this, because billing patterns act as proxies. <b>Stratified allocation</b> splits the
-    review budget evenly across patient-mix groups. Slide to see what that costs in recall.</p>
+  <p class="sub">At a 1% budget, the raw model's false alarms land <b id="rawWorst"></b> as often on providers serving low-income patients.
+    Removing patient demographics (shown below at α = 0) only partly fixes this, because billing patterns act as proxies. <b>Stratified allocation</b>
+    splits the review budget across patient-mix groups. Slide to see what that costs in recall.</p>
   <div class="panel">
     <div class="controls">
       <label>Stratification α <input id="alpha" type="range" min="0" max="10" value="0"> <b id="alphaLabel"></b></label>
       <span id="alphaRecall"></span>
     </div>
     <div id="fairChart"></div>
-    <p class="note">Bars show each group's false-positive rate divided by the overall false-positive rate. 1.0 = parity.
+    <p class="note">Bars show each group's false-positive rate divided by the overall false-positive rate (1.0 = parity). "Many" = top quartile of dual-eligible (low-income) or under-65 (disabled) patient share; rural = RUCA ≥ 4.
       α = 0 is the raw model ranking; α = 1 reviews every patient-mix stratum at the same rate.</p>
   </div>
 
@@ -132,7 +133,7 @@ footer { margin-top: 64px; font-size: 13px; color: var(--muted); }
   <footer>Built by Ben Guettler · data: CMS &amp; HHS-OIG public files · <a href="https://github.com/benyahuta/medicare-fraud-forecasting">source</a></footer>
 </main>
 <div class="tip" id="tip"></div>
-<script src="data.js"></script>
+<script src="data.js?v=3"></script>
 <script>
 const R = window.RESULTS;
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -160,7 +161,8 @@ function kpis() {
   const items = [
     [pct(m["recall@1pct"]), "of future exclusions caught by reviewing the top 1% of providers"],
     [m["lift@1pct"].toFixed(0) + "×", "more hits per review than random selection at 1%"],
-    [imp.their_payments ? money(imp.their_payments) : "–", "2021 Medicare payments to flagged providers who were later excluded"],
+    R.posthoc ? [pct(R.posthoc.queues["risk × dollars"]["1pct"].dollar_share_excl_top2), "of Medicare dollars paid to later-excluded providers sit in a 1% risk × dollars queue (excl. two outlier labs)"]
+              : [imp.their_payments ? money(imp.their_payments) : "–", "2021 Medicare payments to flagged providers who were later excluded"],
     [lead ? Math.round(lead) + " mo" : "–", "median warning before exclusion (flagged cases)"],
   ];
   document.getElementById("kpis").innerHTML = items.map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
@@ -215,10 +217,11 @@ budgetEl.addEventListener("input", update); modelEl.addEventListener("change", u
 // Fairness -----------------------------------------------------------------
 const alphaEl = document.getElementById("alpha");
 function fairChart() {
+  if (R.fairness_raw) document.getElementById("rawWorst").textContent = Math.max(...Object.values(R.fairness_raw.groups)).toFixed(1) + "×";
   const row = R.fairness[+alphaEl.value], groups = Object.keys(row.groups);
   document.getElementById("alphaLabel").textContent = row.alpha.toFixed(1);
   const r0 = R.fairness[0].recall;
-  document.getElementById("alphaRecall").innerHTML = `recall at 1%: <b>${pct(row.recall)}</b> (raw model ${pct(r0)})`;
+  document.getElementById("alphaRecall").innerHTML = `recall at 1%: <b>${pct(row.recall)}</b> (α = 0: ${pct(r0)})`;
   const host = document.getElementById("fairChart");
   const narrow = (host.clientWidth || 600) < 560;
   const H = groups.length * 46 + 30; const [s, W] = svgBox(host, H);
@@ -247,7 +250,7 @@ function ablChart() {
     el("rect", {x: L, y: yy, width: Math.max(2, x(v) - L), height: 20, rx: 4, fill: css("--ours-soft")}, s);
     el("text", {x: x(v) + 5, y: yy + 14}, s).textContent = ((v - full) / full * 100).toFixed(0) + "%"; });
   el("line", {x1: x(full), x2: x(full), y1: 0, y2: H - 18, stroke: css("--ours"), "stroke-width": 2}, s);
-  el("text", {x: x(full), y: H - 4, "text-anchor": "middle"}, s).textContent = "all features AP " + full.toFixed(3);
+  el("text", {x: x(full), y: H - 4, "text-anchor": "middle"}, s).textContent = "all features AP " + full.toFixed(4);
 }
 
 // Rolling ----------------------------------------------------------------

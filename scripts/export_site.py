@@ -55,8 +55,8 @@ def fairness_sweep(df, y, s, alphas=ALPHAS, budget=0.01):
     u65 = df["bene_under65_share"].to_numpy()
     ruca = df["ruca_code"].to_numpy()
     groups = {
-        "Low-income patients (top-quartile dual-eligible share)": dual >= np.nanquantile(dual, .75),
-        "Disabled patients (top-quartile under-65 share)": u65 >= np.nanquantile(u65, .75),
+        "Many low-income patients": dual >= np.nanquantile(dual, .75),
+        "Many disabled patients": u65 >= np.nanquantile(u65, .75),
         "Rural providers": ruca >= 4,
         "Urban providers": ruca < 4,
     }
@@ -86,12 +86,14 @@ def main() -> None:
         "total_paid": float(pay.sum()), "paid_to_future_excluded": float(pay[y == 1].sum()),
         "models": {m: res["models"][m] | {"curve": curves(y, df[m].to_numpy(), pay)}
                    for m in MODELS if m in df},
-        "fairness": fairness_sweep(df, y, df["LightGBM (ours)"].to_numpy()),
+        # Sweep starts from the recommended model (patient demographics removed).
+        "fairness": fairness_sweep(df, y, df["LightGBM (no patient demographics)"].to_numpy()),
+        "fairness_raw": fairness_sweep(df, y, df["LightGBM (ours)"].to_numpy(), alphas=[0.0])[0],
         "ablation": res["ablation_ap"],
         "shap_groups": res.get("shap_group_importance", {}),
         "impact": res["impact"]["models"].get("LightGBM (ours)", {}),
     }
-    for extra in ("rolling.json", "hybrid.json", "deep_results.json"):
+    for extra in ("rolling.json", "hybrid.json", "deep_results.json", "posthoc.json"):
         p = RES / extra
         if p.exists():
             data[extra.removesuffix(".json")] = json.loads(p.read_text())

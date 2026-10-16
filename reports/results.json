@@ -1,0 +1,1143 @@
+{
+  "data": {
+    "train": {
+      "n": 2142600,
+      "pos": 570,
+      "years": [
+        2016,
+        2017
+      ]
+    },
+    "valid": {
+      "n": 1155862,
+      "pos": 105,
+      "years": [
+        2019
+      ]
+    },
+    "test": {
+      "n": 1198748,
+      "pos": 319,
+      "years": [
+        2021
+      ]
+    },
+    "n_features": 86
+  },
+  "tuning": {
+    "method": "provider-grouped 3-fold CV on train cohorts",
+    "best_cv_ap": 0.024357870388798306,
+    "best_iter": 345,
+    "valid_2019_ap": 0.002185014987918195,
+    "params": {
+      "objective": "binary",
+      "learning_rate": 0.05,
+      "num_leaves": 7,
+      "min_child_samples": 2000,
+      "feature_fraction": 0.3,
+      "bagging_fraction": 0.7,
+      "bagging_freq": 1,
+      "lambda_l2": 1.0,
+      "scale_pos_weight": 1.0,
+      "max_cat_to_onehot": 4,
+      "cat_smooth": 50,
+      "min_data_per_group": 500,
+      "extra_trees": true,
+      "num_threads": 0
+    },
+    "trials": [
+      {
+        "num_leaves": 31,
+        "min_child_samples": 200,
+        "feature_fraction": 0.7,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 20.0,
+        "learning_rate": 0.03,
+        "extra_trees": false,
+        "best_iter": 125,
+        "cv_ap": 0.01521289517854498,
+        "fold_ap": [
+          0.020938059364567208,
+          0.013889756926310977,
+          0.010810869244756747
+        ]
+      },
+      {
+        "num_leaves": 63,
+        "min_child_samples": 500,
+        "feature_fraction": 0.7,
+        "lambda_l2": 100.0,
+        "scale_pos_weight": 5.0,
+        "learning_rate": 0.05,
+        "extra_trees": true,
+        "best_iter": 453,
+        "cv_ap": 0.021405047003998492,
+        "fold_ap": [
+          0.0175833545378968,
+          0.030920405735734915,
+          0.015711380738363766
+        ]
+      },
+      {
+        "num_leaves": 7,
+        "min_child_samples": 50,
+        "feature_fraction": 0.3,
+        "lambda_l2": 1.0,
+        "scale_pos_weight": 20.0,
+        "learning_rate": 0.05,
+        "extra_trees": false,
+        "best_iter": 697,
+        "cv_ap": 0.012146151315251727,
+        "fold_ap": [
+          0.00807469326404593,
+          0.019643411164393148,
+          0.008720349517316098
+        ]
+      },
+      {
+        "num_leaves": 15,
+        "min_child_samples": 2000,
+        "feature_fraction": 0.3,
+        "lambda_l2": 100.0,
+        "scale_pos_weight": 1.0,
+        "learning_rate": 0.02,
+        "extra_trees": true,
+        "best_iter": 1951,
+        "cv_ap": 0.0202018918829955,
+        "fold_ap": [
+          0.01705803694682258,
+          0.026680575391400594,
+          0.01686706331076332
+        ]
+      },
+      {
+        "num_leaves": 15,
+        "min_child_samples": 200,
+        "feature_fraction": 0.3,
+        "lambda_l2": 100.0,
+        "scale_pos_weight": 1.0,
+        "learning_rate": 0.05,
+        "extra_trees": false,
+        "best_iter": 749,
+        "cv_ap": 0.0204535356907725,
+        "fold_ap": [
+          0.018555878777732925,
+          0.02481109756640907,
+          0.017993630728175506
+        ]
+      },
+      {
+        "num_leaves": 15,
+        "min_child_samples": 500,
+        "feature_fraction": 0.5,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 5.0,
+        "learning_rate": 0.05,
+        "extra_trees": true,
+        "best_iter": 123,
+        "cv_ap": 0.020082714525667265,
+        "fold_ap": [
+          0.014823326820328709,
+          0.031071167828700577,
+          0.014353648927972515
+        ]
+      },
+      {
+        "num_leaves": 63,
+        "min_child_samples": 500,
+        "feature_fraction": 0.5,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 20.0,
+        "learning_rate": 0.02,
+        "extra_trees": false,
+        "best_iter": 584,
+        "cv_ap": 0.015159593711603407,
+        "fold_ap": [
+          0.010922464583903226,
+          0.01960689897394636,
+          0.01494941757696064
+        ]
+      },
+      {
+        "num_leaves": 63,
+        "min_child_samples": 50,
+        "feature_fraction": 0.7,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 1.0,
+        "learning_rate": 0.02,
+        "extra_trees": false,
+        "best_iter": 315,
+        "cv_ap": 0.015926601959323484,
+        "fold_ap": [
+          0.01228879563671974,
+          0.02019711813037945,
+          0.015293892110871267
+        ]
+      },
+      {
+        "num_leaves": 7,
+        "min_child_samples": 50,
+        "feature_fraction": 0.5,
+        "lambda_l2": 100.0,
+        "scale_pos_weight": 5.0,
+        "learning_rate": 0.05,
+        "extra_trees": true,
+        "best_iter": 645,
+        "cv_ap": 0.022547868991063758,
+        "fold_ap": [
+          0.0186328036617234,
+          0.030921829341685768,
+          0.018088973969782096
+        ]
+      },
+      {
+        "num_leaves": 63,
+        "min_child_samples": 500,
+        "feature_fraction": 0.5,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 1.0,
+        "learning_rate": 0.02,
+        "extra_trees": false,
+        "best_iter": 347,
+        "cv_ap": 0.018078139063513937,
+        "fold_ap": [
+          0.014404032816947795,
+          0.023698601805237366,
+          0.01613178256835665
+        ]
+      },
+      {
+        "num_leaves": 7,
+        "min_child_samples": 2000,
+        "feature_fraction": 0.3,
+        "lambda_l2": 1.0,
+        "scale_pos_weight": 1.0,
+        "learning_rate": 0.05,
+        "extra_trees": true,
+        "best_iter": 345,
+        "cv_ap": 0.024357870388798306,
+        "fold_ap": [
+          0.01847611031831416,
+          0.03854667436674748,
+          0.01605082648133328
+        ]
+      },
+      {
+        "num_leaves": 63,
+        "min_child_samples": 50,
+        "feature_fraction": 0.7,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 5.0,
+        "learning_rate": 0.02,
+        "extra_trees": true,
+        "best_iter": 242,
+        "cv_ap": 0.019651239398218372,
+        "fold_ap": [
+          0.015994496810684954,
+          0.02610302846591457,
+          0.016856192918055585
+        ]
+      },
+      {
+        "num_leaves": 63,
+        "min_child_samples": 500,
+        "feature_fraction": 0.3,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 1.0,
+        "learning_rate": 0.05,
+        "extra_trees": true,
+        "best_iter": 577,
+        "cv_ap": 0.022577801599160438,
+        "fold_ap": [
+          0.019615784479993594,
+          0.031910839039989244,
+          0.01620678127749847
+        ]
+      },
+      {
+        "num_leaves": 7,
+        "min_child_samples": 500,
+        "feature_fraction": 0.7,
+        "lambda_l2": 100.0,
+        "scale_pos_weight": 20.0,
+        "learning_rate": 0.05,
+        "extra_trees": false,
+        "best_iter": 186,
+        "cv_ap": 0.018516982704244716,
+        "fold_ap": [
+          0.02018409091946583,
+          0.02035561945642282,
+          0.015011237736845488
+        ]
+      },
+      {
+        "num_leaves": 31,
+        "min_child_samples": 200,
+        "feature_fraction": 0.3,
+        "lambda_l2": 1.0,
+        "scale_pos_weight": 5.0,
+        "learning_rate": 0.05,
+        "extra_trees": true,
+        "best_iter": 173,
+        "cv_ap": 0.01692733349440554,
+        "fold_ap": [
+          0.014027651386752599,
+          0.022794597755684584,
+          0.013959751340779437
+        ]
+      },
+      {
+        "num_leaves": 31,
+        "min_child_samples": 2000,
+        "feature_fraction": 0.7,
+        "lambda_l2": 10.0,
+        "scale_pos_weight": 5.0,
+        "learning_rate": 0.05,
+        "extra_trees": false,
+        "best_iter": 49,
+        "cv_ap": 0.01961107980634465,
+        "fold_ap": [
+          0.01855829694354953,
+          0.024220221800592738,
+          0.016054720674891693
+        ]
+      }
+    ]
+  },
+  "models": {
+    "Peer payment rule": {
+      "n": 1198748,
+      "n_pos": 319,
+      "prevalence": 0.0002661109757847354,
+      "ap": 0.000521664188882852,
+      "roc_auc": 0.5824786784410189,
+      "recall@0.1pct": 0.003134796238244514,
+      "precision@0.1pct": 0.0008340283569641367,
+      "lift@0.1pct": 3.134137381987602,
+      "recall@0.5pct": 0.0219435736677116,
+      "precision@0.5pct": 0.0011678345011678344,
+      "lift@0.5pct": 4.38852436553586,
+      "recall@1pct": 0.050156739811912224,
+      "precision@1pct": 0.001334779344289647,
+      "lift@1pct": 5.015874825732055,
+      "recall@5pct": 0.15047021943573669,
+      "precision@5pct": 0.0008008408829270734,
+      "lift@5pct": 3.009424472498631,
+      "ci": {
+        "ap": [
+          0.00042920554704796877,
+          0.000681517118639717
+        ],
+        "roc_auc": [
+          0.5512516063316654,
+          0.6190164421263196
+        ],
+        "recall@1pct": [
+          0.02821316614420063,
+          0.07688087774294665
+        ]
+      }
+    },
+    "Isolation Forest": {
+      "n": 1198748,
+      "n_pos": 319,
+      "prevalence": 0.0002661109757847354,
+      "ap": 0.0006041519299409794,
+      "roc_auc": 0.6435089128740279,
+      "recall@0.1pct": 0.009404388714733543,
+      "precision@0.1pct": 0.0025020850708924102,
+      "lift@0.1pct": 9.402412145962805,
+      "recall@0.5pct": 0.0219435736677116,
+      "precision@0.5pct": 0.0011678345011678344,
+      "lift@0.5pct": 4.38852436553586,
+      "recall@1pct": 0.034482758620689655,
+      "precision@1pct": 0.0009176607991991324,
+      "lift@1pct": 3.4484139426907885,
+      "recall@5pct": 0.15673981191222572,
+      "precision@5pct": 0.0008342092530490348,
+      "lift@5pct": 3.1348171588527407,
+      "ci": {
+        "ap": [
+          0.0004906381459991169,
+          0.0009839137645902452
+        ],
+        "roc_auc": [
+          0.6131342208768501,
+          0.6751300610762233
+        ],
+        "recall@1pct": [
+          0.01567398119122257,
+          0.05493730407523504
+        ]
+      }
+    },
+    "Logistic regression": {
+      "n": 1198748,
+      "n_pos": 319,
+      "prevalence": 0.0002661109757847354,
+      "ap": 0.0018201906551079908,
+      "roc_auc": 0.7761848700926386,
+      "recall@0.1pct": 0.025078369905956112,
+      "precision@0.1pct": 0.006672226855713094,
+      "lift@0.1pct": 25.073099055900816,
+      "recall@0.5pct": 0.07836990595611286,
+      "precision@0.5pct": 0.004170837504170837,
+      "lift@0.5pct": 15.673301305485213,
+      "recall@1pct": 0.14106583072100312,
+      "precision@1pct": 0.0037540669058146324,
+      "lift@1pct": 14.107147947371407,
+      "recall@5pct": 0.30407523510971785,
+      "precision@5pct": 0.0016183659509151275,
+      "lift@5pct": 6.0815452881743175,
+      "ci": {
+        "ap": [
+          0.0013347269397912564,
+          0.0032363367752237366
+        ],
+        "roc_auc": [
+          0.7509629872651644,
+          0.801275958647859
+        ],
+        "recall@1pct": [
+          0.10344827586206896,
+          0.18181818181818182
+        ]
+      }
+    },
+    "LightGBM (ours)": {
+      "n": 1198748,
+      "n_pos": 319,
+      "prevalence": 0.0002661109757847354,
+      "ap": 0.0027534102552915466,
+      "roc_auc": 0.823019781976797,
+      "recall@0.1pct": 0.034482758620689655,
+      "precision@0.1pct": 0.009174311926605505,
+      "lift@0.1pct": 34.475511201863625,
+      "recall@0.5pct": 0.09404388714733543,
+      "precision@0.5pct": 0.005005005005005005,
+      "lift@0.5pct": 18.807961566582257,
+      "recall@1pct": 0.1724137931034483,
+      "precision@1pct": 0.004588303995995662,
+      "lift@1pct": 17.242069713453944,
+      "recall@5pct": 0.4012539184952978,
+      "precision@5pct": 0.0021355756878055293,
+      "lift@5pct": 8.025131926663018,
+      "ci": {
+        "ap": [
+          0.0019465481598754796,
+          0.0051307502857830594
+        ],
+        "roc_auc": [
+          0.7998975598542931,
+          0.8497994877572885
+        ],
+        "recall@1pct": [
+          0.13315047021943574,
+          0.21316614420062696
+        ]
+      }
+    },
+    "LightGBM + LR blend": {
+      "n": 1198748,
+      "n_pos": 319,
+      "prevalence": 0.0002661109757847354,
+      "ap": 0.002398003228039134,
+      "roc_auc": 0.8081929678622026,
+      "recall@0.1pct": 0.034482758620689655,
+      "precision@0.1pct": 0.009174311926605505,
+      "lift@0.1pct": 34.475511201863625,
+      "recall@0.5pct": 0.12225705329153605,
+      "precision@0.5pct": 0.0065065065065065065,
+      "lift@0.5pct": 24.450350036556934,
+      "recall@1pct": 0.15673981191222572,
+      "precision@1pct": 0.004171185450905147,
+      "lift@1pct": 15.674608830412676,
+      "recall@5pct": 0.3510971786833856,
+      "precision@5pct": 0.001868628726829838,
+      "lift@5pct": 7.02199043583014,
+      "ci": {
+        "ap": [
+          0.0017386061179927798,
+          0.003616081392039134
+        ],
+        "roc_auc": [
+          0.7857681447099092,
+          0.8327877431941326
+        ],
+        "recall@1pct": [
+          0.11896551724137931,
+          0.1974921630094044
+        ]
+      }
+    },
+    "LightGBM + stratified audit": {
+      "n": 1198748,
+      "n_pos": 319,
+      "prevalence": 0.0002661109757847354,
+      "ap": 0.002140269743412064,
+      "roc_auc": 0.8102823515940937,
+      "recall@0.1pct": 0.034482758620689655,
+      "precision@0.1pct": 0.009174311926605505,
+      "lift@0.1pct": 34.475511201863625,
+      "recall@0.5pct": 0.06896551724137931,
+      "precision@0.5pct": 0.003670337003670337,
+      "lift@0.5pct": 13.792505148826988,
+      "recall@1pct": 0.13793103448275862,
+      "precision@1pct": 0.0036706431967965295,
+      "lift@1pct": 13.793655770763154,
+      "recall@5pct": 0.3793103448275862,
+      "precision@5pct": 0.002018786392378664,
+      "lift@5pct": 7.586257524423632,
+      "ci": {
+        "ap": [
+          0.0016151998624149453,
+          0.0032431679585582887
+        ],
+        "roc_auc": [
+          0.7811115443294911,
+          0.8353601067977052
+        ],
+        "recall@1pct": [
+          0.09717868338557993,
+          0.17719435736677108
+        ]
+      }
+    },
+    "LightGBM (no patient demographics)": {
+      "n": 1198748,
+      "n_pos": 319,
+      "prevalence": 0.0002661109757847354,
+      "ap": 0.003032404529635763,
+      "roc_auc": 0.8220190308654629,
+      "recall@0.1pct": 0.0438871473354232,
+      "precision@0.1pct": 0.011676396997497914,
+      "lift@0.1pct": 43.877923347826425,
+      "recall@0.5pct": 0.109717868338558,
+      "precision@0.5pct": 0.005839172505839173,
+      "lift@0.5pct": 21.9426218276793,
+      "recall@1pct": 0.16927899686520376,
+      "precision@1pct": 0.004504880286977559,
+      "lift@1pct": 16.92857753684569,
+      "recall@5pct": 0.3981191222570533,
+      "precision@5pct": 0.0021188915027445486,
+      "lift@5pct": 7.962435583485963,
+      "ci": {
+        "ap": [
+          0.002178874064045497,
+          0.005328252573430505
+        ],
+        "roc_auc": [
+          0.7974481948547629,
+          0.8461559051350641
+        ],
+        "recall@1pct": [
+          0.13166144200626959,
+          0.21630094043887146
+        ]
+      }
+    }
+  },
+  "significance": {
+    "Peer payment rule": {
+      "delta_ap": 0.002538297305529529,
+      "lo": 0.0014398358114634604,
+      "hi": 0.0046057198054296365,
+      "p_le_0": 0.0
+    },
+    "Isolation Forest": {
+      "delta_ap": 0.002426077031490503,
+      "lo": 0.0013310271622012468,
+      "hi": 0.004446947151773848,
+      "p_le_0": 0.0
+    },
+    "Logistic regression": {
+      "delta_ap": 0.0010910462721256727,
+      "lo": -0.00019353868822368072,
+      "hi": 0.0027818608365152873,
+      "p_le_0": 0.04666666666666667
+    },
+    "LightGBM + LR blend": {
+      "delta_ap": 0.0005221118199232994,
+      "lo": -2.2443542877033507e-05,
+      "hi": 0.0017302736278514202,
+      "p_le_0": 0.03333333333333333
+    }
+  },
+  "ablation_ap": {
+    "all features": 0.0027534102552915466,
+    "- volume": 0.002934791564745266,
+    "- bene": 0.0034053859163256273,
+    "- peer": 0.002944318968747587,
+    "- service": 0.0025711874204818286,
+    "- em": 0.0027385485584931965,
+    "- mismatch": 0.002929333452192422,
+    "- rx": 0.00268140388804179,
+    "- meta": 0.002893766289347278,
+    "summary-file only (volume+meta)": 0.001325731631916954
+  },
+  "fairness": {
+    "LightGBM (ours)": {
+      "all providers": {
+        "n": 1198748,
+        "flag_rate": 0.009999599582230794,
+        "false_positive_rate": 0.009956367878280649,
+        "recall": 0.1724137931034483,
+        "prevalence": 0.0002661109757847354,
+        "fpr_ratio_vs_all": 1.0
+      },
+      "high dual-eligible share (top quartile)": {
+        "n": 214617,
+        "flag_rate": 0.03420511888620193,
+        "false_positive_rate": 0.03406145699315694,
+        "recall": 0.3655913978494624,
+        "prevalence": 0.00043333007170913765,
+        "fpr_ratio_vs_all": 3.421072564771378
+      },
+      "high disabled (<65) share (top quartile)": {
+        "n": 172942,
+        "flag_rate": 0.033537255264770846,
+        "false_positive_rate": 0.03339002464336538,
+        "recall": 0.3684210526315789,
+        "prevalence": 0.0004394536896763077,
+        "fpr_ratio_vs_all": 3.3536350857629675
+      },
+      "rural (RUCA >= 4)": {
+        "n": 134460,
+        "flag_rate": 0.011014428082701175,
+        "false_positive_rate": 0.010957946184804683,
+        "recall": 0.21621621621621623,
+        "prevalence": 0.000275174773166741,
+        "fpr_ratio_vs_all": 1.1005967556410738
+      },
+      "urban (RUCA < 4)": {
+        "n": 1063514,
+        "flag_rate": 0.009868229285181013,
+        "false_positive_rate": 0.0098266417865527,
+        "recall": 0.16666666666666666,
+        "prevalence": 0.0002651587097113907,
+        "fpr_ratio_vs_all": 0.9869705405310566
+      }
+    },
+    "LightGBM (no patient demographics)": {
+      "all providers": {
+        "n": 1198748,
+        "flag_rate": 0.009999599582230794,
+        "false_positive_rate": 0.009957202304016342,
+        "recall": 0.16927899686520376,
+        "prevalence": 0.0002661109757847354,
+        "fpr_ratio_vs_all": 1.0
+      },
+      "high dual-eligible share (top quartile)": {
+        "n": 214617,
+        "flag_rate": 0.029149601382928658,
+        "false_positive_rate": 0.02902705524789767,
+        "recall": 0.3118279569892473,
+        "prevalence": 0.00043333007170913765,
+        "fpr_ratio_vs_all": 2.915181831365353
+      },
+      "high disabled (<65) share (top quartile)": {
+        "n": 172942,
+        "flag_rate": 0.02758728359796926,
+        "false_positive_rate": 0.027449006745108927,
+        "recall": 0.34210526315789475,
+        "prevalence": 0.0004394536896763077,
+        "fpr_ratio_vs_all": 2.756698709841125
+      },
+      "rural (RUCA >= 4)": {
+        "n": 134460,
+        "flag_rate": 0.011029302394764242,
+        "false_positive_rate": 0.010987702997254933,
+        "recall": 0.16216216216216217,
+        "prevalence": 0.000275174773166741,
+        "fpr_ratio_vs_all": 1.1034929954996424
+      },
+      "urban (RUCA < 4)": {
+        "n": 1063514,
+        "flag_rate": 0.009867289006068562,
+        "false_positive_rate": 0.009824760729549149,
+        "recall": 0.1702127659574468,
+        "prevalence": 0.0002651587097113907,
+        "fpr_ratio_vs_all": 0.9866989169825573
+      }
+    },
+    "Peer payment rule": {
+      "all providers": {
+        "n": 1198748,
+        "flag_rate": 0.009999599582230794,
+        "false_positive_rate": 0.00998891048197265,
+        "recall": 0.050156739811912224,
+        "prevalence": 0.0002661109757847354,
+        "fpr_ratio_vs_all": 1.0
+      },
+      "high dual-eligible share (top quartile)": {
+        "n": 214617,
+        "flag_rate": 0.013423913296709953,
+        "false_positive_rate": 0.013392440939009155,
+        "recall": 0.08602150537634409,
+        "prevalence": 0.00043333007170913765,
+        "fpr_ratio_vs_all": 1.340730899849286
+      },
+      "high disabled (<65) share (top quartile)": {
+        "n": 172942,
+        "flag_rate": 0.011871031906650785,
+        "false_positive_rate": 0.011858896486295744,
+        "recall": 0.039473684210526314,
+        "prevalence": 0.0004394536896763077,
+        "fpr_ratio_vs_all": 1.1872062030887078
+      },
+      "rural (RUCA >= 4)": {
+        "n": 134460,
+        "flag_rate": 0.008508106500074372,
+        "false_positive_rate": 0.008503009157659032,
+        "recall": 0.02702702702702703,
+        "prevalence": 0.000275174773166741,
+        "fpr_ratio_vs_all": 0.8512449053382471
+      },
+      "urban (RUCA < 4)": {
+        "n": 1063514,
+        "flag_rate": 0.010191685299864412,
+        "false_positive_rate": 0.01018028050322037,
+        "recall": 0.05319148936170213,
+        "prevalence": 0.0002651587097113907,
+        "fpr_ratio_vs_all": 1.019158247698094
+      }
+    }
+  },
+  "fairness_mitigation": [
+    {
+      "alpha": 0.0,
+      "ap": 0.0027534102552915466,
+      "recall@1pct": 0.1724137931034483,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 3.421072564771378,
+        "high disabled (<65) share (top quartile)": 3.3536350857629675,
+        "rural (RUCA >= 4)": 1.1005967556410738,
+        "urban (RUCA < 4)": 0.9869705405310566
+      },
+      "max_fpr_ratio": 3.421072564771378
+    },
+    {
+      "alpha": 0.25,
+      "ap": 0.0027377948106999147,
+      "recall@1pct": 0.16927899686520376,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 2.635226999960747,
+        "high disabled (<65) share (top quartile)": 2.598675095704816,
+        "rural (RUCA >= 4)": 1.1012516420896905,
+        "urban (RUCA < 4)": 0.9866989169825573
+      },
+      "max_fpr_ratio": 2.635226999960747
+    },
+    {
+      "alpha": 0.5,
+      "ap": 0.0026911163949334405,
+      "recall@1pct": 0.15673981191222572,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 2.002550680997733,
+        "high disabled (<65) share (top quartile)": 1.9926372791941087,
+        "rural (RUCA >= 4)": 1.0762359950076037,
+        "urban (RUCA < 4)": 0.9898620232664384
+      },
+      "max_fpr_ratio": 2.002550680997733
+    },
+    {
+      "alpha": 0.75,
+      "ap": 0.0025049708979552874,
+      "recall@1pct": 0.15673981191222572,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 1.482608216265674,
+        "high disabled (<65) share (top quartile)": 1.4856211484052841,
+        "rural (RUCA >= 4)": 1.0739953926585246,
+        "urban (RUCA < 4)": 0.9902397250782352
+      },
+      "max_fpr_ratio": 1.4856211484052841
+    },
+    {
+      "alpha": 1.0,
+      "ap": 0.002140269743412064,
+      "recall@1pct": 0.13793103448275862,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 0.998667393884571,
+        "high disabled (<65) share (top quartile)": 0.9990107576761177,
+        "rural (RUCA >= 4)": 1.113019920434985,
+        "urban (RUCA < 4)": 0.9854952315017532
+      },
+      "max_fpr_ratio": 1.113019920434985
+    }
+  ],
+  "impact": {
+    "total_payments_test_year": 106854093252.071,
+    "payments_to_future_excluded": 132193036.40000007,
+    "models": {
+      "Peer payment rule": {
+        "0.1pct": {
+          "providers_reviewed": 1199,
+          "future_excluded_found": 1,
+          "their_payments": 187695.55000000008,
+          "share_of_future_excluded_payments": 0.001419859586491804
+        },
+        "0.5pct": {
+          "providers_reviewed": 5994,
+          "future_excluded_found": 7,
+          "their_payments": 2145934.23,
+          "share_of_future_excluded_payments": 0.016233337915823823
+        },
+        "1pct": {
+          "providers_reviewed": 11987,
+          "future_excluded_found": 16,
+          "their_payments": 99789800.27000007,
+          "share_of_future_excluded_payments": 0.7548794020287745
+        },
+        "lead_time_months_at_1pct": {
+          "median": 27.59868421052632,
+          "q25": 25.180921052631582,
+          "q75": 29.654605263157897
+        },
+        "5pct": {
+          "providers_reviewed": 59937,
+          "future_excluded_found": 48,
+          "their_payments": 114430792.83000007,
+          "share_of_future_excluded_payments": 0.8656340450774306
+        }
+      },
+      "Isolation Forest": {
+        "0.1pct": {
+          "providers_reviewed": 1199,
+          "future_excluded_found": 3,
+          "their_payments": 2212962.8999999994,
+          "share_of_future_excluded_payments": 0.016740389359874014
+        },
+        "0.5pct": {
+          "providers_reviewed": 5994,
+          "future_excluded_found": 7,
+          "their_payments": 3669869.33,
+          "share_of_future_excluded_payments": 0.02776144212994262
+        },
+        "1pct": {
+          "providers_reviewed": 11987,
+          "future_excluded_found": 11,
+          "their_payments": 10493283.209999997,
+          "share_of_future_excluded_payments": 0.07937848691400504
+        },
+        "lead_time_months_at_1pct": {
+          "median": 20.657894736842106,
+          "q25": 17.088815789473685,
+          "q75": 29.161184210526315
+        },
+        "5pct": {
+          "providers_reviewed": 59937,
+          "future_excluded_found": 50,
+          "their_payments": 21445749.97,
+          "share_of_future_excluded_payments": 0.16223055732760208
+        }
+      },
+      "Logistic regression": {
+        "0.1pct": {
+          "providers_reviewed": 1199,
+          "future_excluded_found": 8,
+          "their_payments": 708777.0199999998,
+          "share_of_future_excluded_payments": 0.005361681971320536
+        },
+        "0.5pct": {
+          "providers_reviewed": 5994,
+          "future_excluded_found": 25,
+          "their_payments": 4948415.680000001,
+          "share_of_future_excluded_payments": 0.03743325529664585
+        },
+        "1pct": {
+          "providers_reviewed": 11987,
+          "future_excluded_found": 45,
+          "their_payments": 7557019.29,
+          "share_of_future_excluded_payments": 0.0571665459527942
+        },
+        "lead_time_months_at_1pct": {
+          "median": 26.644736842105264,
+          "q25": 20.657894736842106,
+          "q75": 31.67763157894737
+        },
+        "5pct": {
+          "providers_reviewed": 59937,
+          "future_excluded_found": 97,
+          "their_payments": 13023596.149999999,
+          "share_of_future_excluded_payments": 0.09851953253114014
+        }
+      },
+      "LightGBM (ours)": {
+        "0.1pct": {
+          "providers_reviewed": 1199,
+          "future_excluded_found": 11,
+          "their_payments": 531003.1599999999,
+          "share_of_future_excluded_payments": 0.00401687694345146
+        },
+        "0.5pct": {
+          "providers_reviewed": 5994,
+          "future_excluded_found": 30,
+          "their_payments": 5881882.760000001,
+          "share_of_future_excluded_payments": 0.04449464903886569
+        },
+        "1pct": {
+          "providers_reviewed": 11987,
+          "future_excluded_found": 55,
+          "their_payments": 11331618.000000002,
+          "share_of_future_excluded_payments": 0.08572023389879557
+        },
+        "lead_time_months_at_1pct": {
+          "median": 25.690789473684212,
+          "q25": 22.138157894736842,
+          "q75": 31.67763157894737
+        },
+        "5pct": {
+          "providers_reviewed": 59937,
+          "future_excluded_found": 128,
+          "their_payments": 54977556.109999955,
+          "share_of_future_excluded_payments": 0.4158884431979045
+        }
+      },
+      "LightGBM + LR blend": {
+        "0.1pct": {
+          "providers_reviewed": 1199,
+          "future_excluded_found": 11,
+          "their_payments": 745721.1299999999,
+          "share_of_future_excluded_payments": 0.005641152895100604
+        },
+        "0.5pct": {
+          "providers_reviewed": 5994,
+          "future_excluded_found": 39,
+          "their_payments": 7349556.69,
+          "share_of_future_excluded_payments": 0.05559715466222544
+        },
+        "1pct": {
+          "providers_reviewed": 11987,
+          "future_excluded_found": 50,
+          "their_payments": 8444963.01,
+          "share_of_future_excluded_payments": 0.06388356936175192
+        },
+        "lead_time_months_at_1pct": {
+          "median": 26.16776315789474,
+          "q25": 21.159539473684212,
+          "q75": 31.67763157894737
+        },
+        "5pct": {
+          "providers_reviewed": 59937,
+          "future_excluded_found": 112,
+          "their_payments": 14416664.399999999,
+          "share_of_future_excluded_payments": 0.10905766894087313
+        }
+      },
+      "LightGBM (no patient demographics)": {
+        "0.1pct": {
+          "providers_reviewed": 1199,
+          "future_excluded_found": 14,
+          "their_payments": 673808.1299999997,
+          "share_of_future_excluded_payments": 0.005097152984376106
+        },
+        "0.5pct": {
+          "providers_reviewed": 5994,
+          "future_excluded_found": 35,
+          "their_payments": 5732617.6499999985,
+          "share_of_future_excluded_payments": 0.04336550400925654
+        },
+        "1pct": {
+          "providers_reviewed": 11987,
+          "future_excluded_found": 54,
+          "their_payments": 8831936.78,
+          "share_of_future_excluded_payments": 0.06681090790044063
+        },
+        "lead_time_months_at_1pct": {
+          "median": 25.690789473684212,
+          "q25": 16.817434210526315,
+          "q75": 31.175986842105264
+        },
+        "5pct": {
+          "providers_reviewed": 59937,
+          "future_excluded_found": 127,
+          "their_payments": 114164163.73000006,
+          "share_of_future_excluded_payments": 0.863617077260811
+        }
+      },
+      "LightGBM + stratified audit": {
+        "0.1pct": {
+          "providers_reviewed": 1199,
+          "future_excluded_found": 11,
+          "their_payments": 417585.6499999999,
+          "share_of_future_excluded_payments": 0.0031589080739202967
+        },
+        "0.5pct": {
+          "providers_reviewed": 5994,
+          "future_excluded_found": 22,
+          "their_payments": 2760939.900000001,
+          "share_of_future_excluded_payments": 0.02088566822571298
+        },
+        "1pct": {
+          "providers_reviewed": 11987,
+          "future_excluded_found": 44,
+          "their_payments": 10965018.930000002,
+          "share_of_future_excluded_payments": 0.08294702375109371
+        },
+        "lead_time_months_at_1pct": {
+          "median": 25.690789473684212,
+          "q25": 15.575657894736842,
+          "q75": 31.67763157894737
+        },
+        "5pct": {
+          "providers_reviewed": 59937,
+          "future_excluded_found": 121,
+          "their_payments": 118878460.85000005,
+          "share_of_future_excluded_payments": 0.8992792970598563
+        }
+      }
+    }
+  },
+  "by_specialty": [
+    {
+      "specialty": "Family Practice",
+      "n": 83929,
+      "pos": 55,
+      "roc_auc": 0.7678255478455779,
+      "ap": 0.0031150596907651134,
+      "prevalence": 0.00065531580264271,
+      "recall@1pct_global": 0.2
+    },
+    {
+      "specialty": "Internal Medicine",
+      "n": 91072,
+      "pos": 45,
+      "roc_auc": 0.8434530414052973,
+      "ap": 0.0055399856744415,
+      "prevalence": 0.0004941145467322557,
+      "recall@1pct_global": 0.24444444444444444
+    },
+    {
+      "specialty": "Nurse Practitioner",
+      "n": 162568,
+      "pos": 24,
+      "roc_auc": 0.7333427154083407,
+      "ap": 0.00078911270041732,
+      "prevalence": 0.00014763052999360268,
+      "recall@1pct_global": 0.041666666666666664
+    },
+    {
+      "specialty": "Chiropractic",
+      "n": 33885,
+      "pos": 18,
+      "roc_auc": 0.696292359327172,
+      "ap": 0.020419811796934004,
+      "prevalence": 0.0005312084993359894,
+      "recall@1pct_global": 0.05555555555555555
+    },
+    {
+      "specialty": "Podiatry",
+      "n": 15433,
+      "pos": 13,
+      "roc_auc": 0.7206325451461639,
+      "ap": 0.0032325400030895853,
+      "prevalence": 0.000842350806712888,
+      "recall@1pct_global": 0.3076923076923077
+    },
+    {
+      "specialty": "Psychiatry",
+      "n": 20760,
+      "pos": 12,
+      "roc_auc": 0.7990167727009833,
+      "ap": 0.004466375880524057,
+      "prevalence": 0.0005780346820809249,
+      "recall@1pct_global": 0.16666666666666666
+    },
+    {
+      "specialty": "Emergency Medicine",
+      "n": 46367,
+      "pos": 11,
+      "roc_auc": 0.7921245852258019,
+      "ap": 0.0034576534776062,
+      "prevalence": 0.00023723769059891733,
+      "recall@1pct_global": 0.18181818181818182
+    },
+    {
+      "specialty": "Obstetrics & Gynecology",
+      "n": 24892,
+      "pos": 11,
+      "roc_auc": 0.6914513082271613,
+      "ap": 0.0026018219033012643,
+      "prevalence": 0.0004419090470834003,
+      "recall@1pct_global": 0.0
+    },
+    {
+      "specialty": "General Practice",
+      "n": 4150,
+      "pos": 9,
+      "roc_auc": 0.8136252649655209,
+      "ap": 0.008162648644809803,
+      "prevalence": 0.002168674698795181,
+      "recall@1pct_global": 0.3333333333333333
+    },
+    {
+      "specialty": "General Surgery",
+      "n": 20549,
+      "pos": 9,
+      "roc_auc": 0.9058422590068159,
+      "ap": 0.004121257028607229,
+      "prevalence": 0.0004379775171541194,
+      "recall@1pct_global": 0.0
+    },
+    {
+      "specialty": "Certified Registered Nurse Anesthetist (CRNA)",
+      "n": 48405,
+      "pos": 8,
+      "roc_auc": 0.745079757009732,
+      "ap": 0.0008166572684587585,
+      "prevalence": 0.0001652721826257618,
+      "recall@1pct_global": 0.0
+    },
+    {
+      "specialty": "Physician Assistant",
+      "n": 91922,
+      "pos": 8,
+      "roc_auc": 0.8078489131144331,
+      "ap": 0.0013219224697186786,
+      "prevalence": 8.703030830486718e-05,
+      "recall@1pct_global": 0.0
+    }
+  ],
+  "shap_importance": {
+    "specialty_cat": 0.60188,
+    "svc_facility_share": 0.253,
+    "rx_lis_claim_share": 0.12753,
+    "bene_under65_share": 0.11694,
+    "bene_female_share": 0.11303,
+    "svc_rare_code_pay_share": 0.1105,
+    "cc_cancer6": 0.1067,
+    "charge_markup": 0.09568,
+    "rx_antipsychotic_65_share": 0.08819,
+    "svc_pay_excess": 0.08807,
+    "bene_dual_share": 0.08331,
+    "drug_pay_share": 0.08164,
+    "cc_alz": 0.07795,
+    "peer_z_charge_markup": 0.07144,
+    "peer_z_rx_opioid_share": 0.06755,
+    "cc_copd": 0.06669,
+    "cc_diabetes": 0.06376,
+    "rx_antibiotic_share": 0.06286,
+    "svc_max_intensity_excess": 0.06041,
+    "peer_pct_charge_markup": 0.05733,
+    "rx_claims_per_bene": 0.05559,
+    "peer_z_log_benes": 0.05487,
+    "svc_srv_per_bene_day": 0.05441,
+    "mismatch_surprise": 0.05274,
+    "rx_days_per_claim": 0.05176
+  },
+  "shap_group_importance": {
+    "volume": 0.2647547342736018,
+    "bene": 0.8209371260433524,
+    "peer": 0.4073146105008079,
+    "service": 0.7199997283228715,
+    "em": 0.19836653570404839,
+    "mismatch": 0.06358124797085618,
+    "rx": 0.764545741236273,
+    "meta": 0.6160842128610906
+  }
+}

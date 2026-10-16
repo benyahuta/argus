@@ -95,6 +95,30 @@ def main() -> None:
         out.append(f"| {r['alpha']:.2f} | {r['ap']:.4f} | {r['recall@1pct']:.3f} | "
                    f"{r['max_fpr_ratio']:.2f} |")
 
+    ph_path = REPORTS / "posthoc.json"
+    if ph_path.exists():
+        ph = json.loads(ph_path.read_text())
+        out += ["", "## Recommended configuration (fairness without losing recall)", "",
+                "| Variant | AP | Recall @1% | Worst-group FPR ratio |", "|---|---|---|---|"]
+        for name, r in ph["recommended"].items():
+            out.append(f"| {name} | {r['ap']:.4f} | {r['recall@1pct']:.3f} | "
+                       f"{r['max_fpr_ratio']:.2f} |")
+        top2 = ph["top2_share_of_excluded_dollars"]
+        out += ["", "## Case queue vs. dollar queue (1% budget)", "",
+                f"Two clinical laboratories account for {top2:.0%} of all 2021 payments to "
+                "later-excluded providers, so dollar shares are also shown without them.", "",
+                "| Ranking | Later-excluded found | Recall | Their 2021 payments | $ share | "
+                "$ share excl. 2 largest |", "|---|---|---|---|---|---|"]
+        for name, rows in ph["queues"].items():
+            r = rows["1pct"]
+            out.append(f"| {name} | {r['found']} | {r['recall']:.1%} | "
+                       f"${r['dollars_found'] / 1e6:.1f}M | {r['dollar_share']:.0%} | "
+                       f"{r['dollar_share_excl_top2']:.0%} |")
+        e, o = ph["expected_vs_observed_total"]
+        out += ["", f"Calibration: after undoing negative subsampling the model expects {e:.0f} "
+                f"exclusions in the test cohort; {o} occurred (rates rose relative to the "
+                "training years), so scores should be used for ranking, not as probabilities."]
+
     roll = REPORTS / "rolling.json"
     if roll.exists():
         rows = json.loads(roll.read_text())

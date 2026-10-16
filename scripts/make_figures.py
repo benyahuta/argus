@@ -105,11 +105,11 @@ def ablation(res: dict):
     fig, ax = plt.subplots(figsize=(6.5, 3.6))
     ax.barh(labels, vals, color=BLUE_LIGHT, height=0.6)
     ax.axvline(full, color=BLUE, lw=2)
-    ax.text(full, -0.9, f" all features: {full:.3f}", color=INK, fontsize=9, va="center")
+    ax.text(full, -0.9, f" all features: {full:.4f}", color=INK, fontsize=9, va="center")
     for i, v in enumerate(vals):
-        ax.text(v, i, f" {v:.3f} ({(v - full) / full:+.0%})", va="center", fontsize=8.5,
+        ax.text(v, i, f" {v:.4f} ({(v - full) / full:+.0%})", va="center", fontsize=8.5,
                 color=INK2)
-    ax.set_xlabel("Test average precision (single seed)")
+    ax.set_xlabel("Test average precision (3-seed LightGBM; random ranking = 0.0003)")
     ax.set_title("Feature-group ablation: what the model relies on", pad=14)
     ax.set_ylim(-1.3, len(items) - 0.5)
     ax.grid(axis="y", visible=False)
@@ -132,18 +132,25 @@ def shap_summary():
 
 
 def fairness(res: dict):
-    fa = res["fairness"]
-    groups = [g for g in fa[OURS] if g != "all providers"]
-    models = [OURS, "LightGBM (no patient demographics)", "LightGBM + stratified audit",
-              "Peer payment rule"]
-    models = [m for m in models if m in fa]
-    colors = [BLUE, ORANGE, "#1baf7a", "#b5b4ae"][:len(models)]
-    fig, ax = plt.subplots(figsize=(7.2, 4.4))
+    ph = json.loads((REPORTS / "posthoc.json").read_text())["recommended"]
+    rule = res["fairness"]["Peer payment rule"]
+    groups = [g for g in rule if g != "all providers"]
+    models = {
+        "LightGBM (ours)": (ph["LightGBM (ours)"], BLUE),
+        "No patient demographics": (ph["No demographics"], BLUE_LIGHT),
+        "No demographics + stratified α=0.75": (ph["No demographics + stratified α=0.75"],
+                                               "#1baf7a"),
+        "Peer payment rule": ({"fpr_ratio": {g: v["fpr_ratio_vs_all"] for g, v in rule.items()},
+                               "recall@1pct": res["models"]["Peer payment rule"]["recall@1pct"]},
+                              "#b5b4ae"),
+    }
+    fig, ax = plt.subplots(figsize=(7.4, 4.6))
     w = 0.8 / len(models)
     yv = np.arange(len(groups))
-    for i, (m, c) in enumerate(zip(models, colors, strict=True)):
-        vals = [fa[m][g]["fpr_ratio_vs_all"] for g in groups]
-        ax.barh(yv + (i - (len(models) - 1) / 2) * w, vals, height=w - 0.03, color=c, label=m)
+    for i, (m, (r, c)) in enumerate(models.items()):
+        vals = [r["fpr_ratio"][g] for g in groups]
+        ax.barh(yv + (i - (len(models) - 1) / 2) * w, vals, height=w - 0.03, color=c,
+                label=f"{m}  (recall@1% {r['recall@1pct']:.0%})")
     ax.axvline(1, color=INK2, lw=1)
     ax.set_yticks(yv, groups)
     ax.invert_yaxis()
@@ -155,20 +162,27 @@ def fairness(res: dict):
 
 
 def fairness_tradeoff(res: dict):
-    rows = res["fairness_mitigation"]
-    x = [r["max_fpr_ratio"] for r in rows]
-    y = [r["recall@1pct"] for r in rows]
-    fig, ax = plt.subplots(figsize=(6, 3.8))
-    ax.plot(x, y, color=BLUE, lw=2, marker="o", ms=8, mec=SURFACE, mew=2)
-    for r, xi, yi in zip(rows, x, y, strict=True):
-        lab = {0.0: "α=0 (raw model)", 1.0: "α=1 (fully stratified)"}.get(r["alpha"],
-                                                                        f"α={r['alpha']:g}")
-        ax.annotate(lab, (xi, yi), xytext=(8, 4), textcoords="offset points", fontsize=9,
-                    color=INK2)
+    ph = json.loads((REPORTS / "posthoc.json").read_text())
+    curves = {
+        "all features": ([r["max_fpr_ratio"] for r in res["fairness_mitigation"]],
+                         [r["recall@1pct"] for r in res["fairness_mitigation"]],
+                         [r["alpha"] for r in res["fairness_mitigation"]], BLUE),
+        "no patient demographics": ([r["max_fpr_ratio"] for r in ph["tradeoff_no_demographics"]],
+                                    [r["recall@1pct"] for r in ph["tradeoff_no_demographics"]],
+                                    [r["alpha"] for r in ph["tradeoff_no_demographics"]],
+                                    "#1baf7a"),
+    }
+    fig, ax = plt.subplots(figsize=(6.4, 4))
+    for name, (x, y, a, c) in curves.items():
+        ax.plot(x, y, color=c, lw=2, marker="o", ms=8, mec=SURFACE, mew=2, label=name)
+        for xi, yi, ai in zip(x, y, a, strict=True):
+            if ai in (0.0, 0.5, 1.0):
+                ax.annotate(f"α={ai:g}", (xi, yi), xytext=(7, 5), textcoords="offset points",
+                            fontsize=8.5, color=INK2)
     ax.axvline(1, color=MUTED, lw=1, ls=(0, (2, 3)))
-    ax.set_xlabel("Worst group false-positive rate ÷ overall (1.0 = parity)")
+    ax.set_xlabel("Worst-group false-positive rate ÷ overall (1.0 = parity)")
     ax.set_ylabel("Recall at 1% audit budget")
-    ax.set_xlim(0.9, max(x) * 1.25)
+    ax.legend(loc="lower right", title="LightGBM trained on", fontsize=9, title_fontsize=9)
     ax.set_title("Fairness–recall trade-off of stratified audit allocation")
     save(fig, "fairness_tradeoff.png")
 
@@ -206,9 +220,8 @@ def lead_time(df: pd.DataFrame):
     months = (pos["date"] - pd.Timestamp("2021-12-31")).dt.days / 30.4
     fig, ax = plt.subplots(figsize=(6.5, 3.4))
     bins = np.arange(0, 37, 3)
-    ax.hist(months[~pos["flagged"]], bins=bins, color=GRID, label="missed", rwidth=0.9)
-    ax.hist(months[pos["flagged"]], bins=bins, color=BLUE, label="flagged in top 1%",
-            rwidth=0.9)
+    ax.hist([months[pos["flagged"]], months[~pos["flagged"]]], bins=bins, stacked=True,
+            color=[BLUE, GRID], label=["flagged in top 1%", "missed"], rwidth=0.9)
     ax.set_xlabel("Months between end of the scored year (Dec 2021) and OIG exclusion")
     ax.set_ylabel("Providers")
     ax.legend()
@@ -231,7 +244,8 @@ def em_upcoding():
     ax.set_xlabel("Share of established-patient office visits billed at level 4 or 5")
     ax.set_ylabel("Density")
     ax.legend()
-    ax.set_title("Upcoding signal: internal & family medicine, 2021")
+    ax.set_title("E/M level mix, internal & family medicine (2021): later-excluded providers\n"
+                 "cluster at the extremes, not just at heavy level 4–5 billing", fontsize=11)
     save(fig, "em_upcoding.png")
 
 
@@ -271,6 +285,22 @@ PRETTY = {
     "ruca_code": "rurality (RUCA)",
     "drug_pay_share": "drug share of Part B payment",
     "codes_per_bene": "distinct codes per patient",
+    "rx_opioid_days_per_bene": "opioid days supplied per patient",
+    "bene_female_share": "female patient share",
+    "cc_cancer6": "patients with cancer (%)",
+    "cc_alz": "patients with dementia (%)",
+    "cc_depress": "patients with depression (%)",
+    "cc_diabetes": "patients with diabetes (%)",
+    "rx_antipsychotic_65_share": "antipsychotic share (65+ patients)",
+    "peer_z_charge_markup": "charge markup vs. peers (z)",
+    "peer_z_codes_per_bene": "codes per patient vs. peers (z)",
+    "rx_antibiotic_share": "antibiotic share of prescriptions",
+    "rx_days_per_claim": "days supplied per prescription",
+    "svc_srv_per_bene_day": "services per patient-day",
+    "svc_n_lines": "number of billed code lines",
+    "mismatch_entropy": "specialty-prediction entropy",
+    "em_est_mean_level": "mean office-visit level",
+    "peer_z_bene_risk_score": "patient risk vs. peers (z)",
 }
 
 

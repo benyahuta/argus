@@ -1,0 +1,268 @@
+{
+  "queues": {
+    "risk": {
+      "0.1pct": {
+        "dollar_share_excl_top2": 0.014333681145549745,
+        "found": 11,
+        "recall": 0.034482758620689655,
+        "dollars_found": 531003.1599999999,
+        "dollar_share": 0.00401687694345146,
+        "dollars_reviewed": 206949359.88
+      },
+      "0.5pct": {
+        "dollar_share_excl_top2": 0.1587731267311971,
+        "found": 30,
+        "recall": 0.09404388714733543,
+        "dollars_found": 5881882.760000001,
+        "dollar_share": 0.04449464903886569,
+        "dollars_reviewed": 1005320494.0600001
+      },
+      "1pct": {
+        "dollar_share_excl_top2": 0.3058810408494973,
+        "found": 55,
+        "recall": 0.1724137931034483,
+        "dollars_found": 11331618.0,
+        "dollar_share": 0.08572023389879556,
+        "dollars_reviewed": 2073829590.4900002
+      },
+      "5pct": {
+        "dollar_share_excl_top2": 0.4766579705001609,
+        "found": 128,
+        "recall": 0.4012539184952978,
+        "dollars_found": 54977556.109999955,
+        "dollar_share": 0.4158884431979045,
+        "dollars_reviewed": 8778319691.72
+      }
+    },
+    "risk \u00d7 dollars": {
+      "0.1pct": {
+        "dollar_share_excl_top2": 0.1701905487230729,
+        "found": 8,
+        "recall": 0.025078369905956112,
+        "dollars_found": 101452053.93000005,
+        "dollar_share": 0.7674538439605734,
+        "dollars_reviewed": 7419574564.991001
+      },
+      "0.5pct": {
+        "dollar_share_excl_top2": 0.4954950992904029,
+        "found": 27,
+        "recall": 0.08463949843260188,
+        "dollars_found": 113503232.03000005,
+        "dollar_share": 0.8586173305419286,
+        "dollars_reviewed": 14569237869.351
+      },
+      "1pct": {
+        "dollar_share_excl_top2": 0.5888465660243483,
+        "found": 37,
+        "recall": 0.11598746081504702,
+        "dollars_found": 116961514.89000008,
+        "dollar_share": 0.8847781855625795,
+        "dollars_reviewed": 20251127838.801
+      },
+      "5pct": {
+        "dollar_share_excl_top2": 0.7933617802285443,
+        "found": 87,
+        "recall": 0.2727272727272727,
+        "dollars_found": 124537951.39000005,
+        "dollar_share": 0.9420916167865555,
+        "dollars_reviewed": 42547296943.701004
+      }
+    },
+    "dollars only": {
+      "0.1pct": {
+        "dollar_share_excl_top2": 0.1610646362696433,
+        "found": 3,
+        "recall": 0.009404388714733543,
+        "dollars_found": 101113976.90000005,
+        "dollar_share": 0.7648963943459279,
+        "dollars_reviewed": 11835658597.411
+      },
+      "0.5pct": {
+        "dollar_share_excl_top2": 0.2111747764029366,
+        "found": 4,
+        "recall": 0.012539184952978056,
+        "dollars_found": 102970348.79000005,
+        "dollar_share": 0.7789392814794289,
+        "dollars_reviewed": 24307738084.840996
+      },
+      "1pct": {
+        "dollar_share_excl_top2": 0.35358650676036596,
+        "found": 8,
+        "recall": 0.025078369905956112,
+        "dollars_found": 108246109.99000005,
+        "dollar_share": 0.8188488057908019,
+        "dollars_reviewed": 32030942764.880997
+      },
+      "5pct": {
+        "dollar_share_excl_top2": 0.64979194418517,
+        "found": 31,
+        "recall": 0.09717868338557993,
+        "dollars_found": 119219287.20000006,
+        "dollar_share": 0.9018575444417283,
+        "dollars_reviewed": 53558922692.620995
+      }
+    }
+  },
+  "top2_positive_payments": [
+    57827838.790000096,
+    37319364.46999996
+  ],
+  "top2_share_of_excluded_dollars": 0.7197595716925373,
+  "calibration_deciles": [
+    {
+      "decile": 1,
+      "mean_pred": 9.190809915917524e-06,
+      "observed": 1.6684045881126174e-05,
+      "n": 119875
+    },
+    {
+      "decile": 2,
+      "mean_pred": 1.652615137564665e-05,
+      "observed": 7.507820646506778e-05,
+      "n": 119875
+    },
+    {
+      "decile": 3,
+      "mean_pred": 2.4127874810164197e-05,
+      "observed": 5.005213764337852e-05,
+      "n": 119875
+    },
+    {
+      "decile": 4,
+      "mean_pred": 3.281454742370628e-05,
+      "observed": 0.00010844720289637452,
+      "n": 119874
+    },
+    {
+      "decile": 5,
+      "mean_pred": 4.336977189074565e-05,
+      "observed": 2.502606882168926e-05,
+      "n": 119875
+    },
+    {
+      "decile": 6,
+      "mean_pred": 5.7450919584496326e-05,
+      "observed": 0.0001251303441084463,
+      "n": 119875
+    },
+    {
+      "decile": 7,
+      "mean_pred": 7.887466092893523e-05,
+      "observed": 0.00013347348048784558,
+      "n": 119874
+    },
+    {
+      "decile": 8,
+      "mean_pred": 0.00011639991943631912,
+      "observed": 0.0002586027111574557,
+      "n": 119875
+    },
+    {
+      "decile": 9,
+      "mean_pred": 0.00019330879134394472,
+      "observed": 0.0004171011470281543,
+      "n": 119875
+    },
+    {
+      "decile": 10,
+      "mean_pred": 0.0008056725864039351,
+      "observed": 0.001451511991657977,
+      "n": 119875
+    }
+  ],
+  "top1pct_mean_pred": 0.003492265913616234,
+  "top1pct_observed": 0.004588303995995662,
+  "expected_vs_observed_total": [
+    165.1559952803097,
+    319
+  ],
+  "recommended": {
+    "LightGBM (ours)": {
+      "recall@1pct": 0.1724137931034483,
+      "ap": 0.0027534102552915466,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 3.421072564771378,
+        "high disabled (<65) share (top quartile)": 3.3536350857629675,
+        "rural (RUCA >= 4)": 1.1005967556410738,
+        "urban (RUCA < 4)": 0.9869705405310566
+      },
+      "max_fpr_ratio": 3.421072564771378
+    },
+    "No demographics": {
+      "recall@1pct": 0.16927899686520376,
+      "ap": 0.003032404529635763,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 2.915181831365353,
+        "high disabled (<65) share (top quartile)": 2.756698709841125,
+        "rural (RUCA >= 4)": 1.1034929954996424,
+        "urban (RUCA < 4)": 0.9866989169825573
+      },
+      "max_fpr_ratio": 2.915181831365353
+    },
+    "No demographics + stratified \u03b1=0.5": {
+      "recall@1pct": 0.16927899686520376,
+      "ap": 0.0029317161205362416,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 1.8056618473705102,
+        "high disabled (<65) share (top quartile)": 1.7893850424258515,
+        "rural (RUCA >= 4)": 1.1064814667129117,
+        "urban (RUCA < 4)": 0.9863210885632647
+      },
+      "max_fpr_ratio": 1.8056618473705102
+    },
+    "No demographics + stratified \u03b1=0.75": {
+      "recall@1pct": 0.16927899686520376,
+      "ap": 0.002743339162629541,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 1.3861977521555822,
+        "high disabled (<65) share (top quartile)": 1.386773407880035,
+        "rural (RUCA >= 4)": 1.119929587172623,
+        "urban (RUCA < 4)": 0.984620860676448
+      },
+      "max_fpr_ratio": 1.386773407880035
+    },
+    "No demographics + stratified \u03b1=1": {
+      "recall@1pct": 0.14733542319749215,
+      "ap": 0.002360561225420198,
+      "fpr_ratio": {
+        "all providers": 1.0,
+        "high dual-eligible share (top quartile)": 0.9975146830471026,
+        "high disabled (<65) share (top quartile)": 0.9986811368362489,
+        "rural (RUCA >= 4)": 1.128233169572423,
+        "urban (RUCA < 4)": 0.9835716036258612
+      },
+      "max_fpr_ratio": 1.128233169572423
+    }
+  },
+  "tradeoff_no_demographics": [
+    {
+      "alpha": 0.0,
+      "recall@1pct": 0.16927899686520376,
+      "max_fpr_ratio": 2.915181831365353
+    },
+    {
+      "alpha": 0.25,
+      "recall@1pct": 0.16927899686520376,
+      "max_fpr_ratio": 2.2916035112467323
+    },
+    {
+      "alpha": 0.5,
+      "recall@1pct": 0.16927899686520376,
+      "max_fpr_ratio": 1.8056618473705102
+    },
+    {
+      "alpha": 0.75,
+      "recall@1pct": 0.16927899686520376,
+      "max_fpr_ratio": 1.386773407880035
+    },
+    {
+      "alpha": 1.0,
+      "recall@1pct": 0.14733542319749215,
+      "max_fpr_ratio": 1.128233169572423
+    }
+  ]
+}
