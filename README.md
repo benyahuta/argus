@@ -3,41 +3,84 @@
 [![ci](https://github.com/benyahuta/medicare-fraud-forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/benyahuta/medicare-fraud-forecasting/actions/workflows/ci.yml)
 **[Interactive results →](https://benyahuta.github.io/medicare-fraud-forecasting/)** · [Model card](MODEL_CARD.md) · [Full results tables](reports/RESULTS.md)
 
-Improper payments in Medicare fee-for-service run to tens of billions of dollars a year, while the HHS Office
-of Inspector General (OIG) can investigate only a sliver of the ~1.2 million clinicians who bill it. This project
-asks a concrete question: **using only data CMS already publishes, can we tell investigators which providers to
-look at first, and who would those leads unfairly land on?**
+## The short version
 
-The model reads one year of a provider's public Medicare billing (Part B services and Part D prescribing) and ranks
-how likely they are to be **excluded by OIG for fraud, abuse or misconduct within the next three years**. Everything is
-evaluated strictly forward in time: the model is trained on exclusions through 2021 and tested on what OIG actually did in
-2022–2024.
+Medicare is the U.S. government health insurance program for people over 65 and people with disabilities. Doctors,
+nurses, labs and clinics bill it for the care they provide, about $100 billion a year for the services studied here.
+A small number of them commit fraud: billing for services that never happened, billing for more expensive services than
+were provided ("upcoding"), prescribing opioids without medical need, or taking kickbacks.
+
+When a provider is caught, the government watchdog, the **HHS Office of Inspector General (OIG)**, can ban them from
+billing Medicare. That ban is called an **exclusion**, and OIG publishes the full list of excluded providers. But OIG
+can only investigate a tiny fraction of the ~1.2 million providers who bill Medicare, so **deciding whom to look at
+first matters a lot**.
+
+This project asks two questions:
+
+1. **Using only data the government already publishes, can a model point investigators toward providers who will be
+   excluded in the next few years?**
+2. **If so, does the model unfairly point at doctors who serve poor or disabled patients?**
+
+**How it works, in one paragraph.** For every provider, the government publishes what they billed Medicare each year:
+which services, how many, to how many patients, and what they prescribed. I turned that into 86 measurements of
+billing behavior, mostly "how unusual is this provider compared with others in the same specialty?" I then trained a
+model on 2016–2019 data to recognize the billing patterns of providers who were later excluded. Finally I tested it
+the honest way: give it providers' **2021** billing, ask it to rank them, and check the ranking against who OIG
+actually excluded in **2022–2024**. The model never saw any of those later outcomes during training.
 
 <p align="center"><img src="reports/figures/recall_at_budget.png" width="720"></p>
 
-## Headline results (2021 billing → exclusions in 2022–24)
+*How to read this chart: move right along the bottom and investigators review more providers, starting with the
+model's highest-risk picks. The height of each line shows the share of future-excluded providers that review would
+catch. Higher is better. The blue line is this project's model; the gray lines are simpler approaches.*
 
-Held-out test cohort: **1,198,748 providers**, of whom **319** were excluded in 2022–24 (0.027%). 95% stratified-bootstrap CIs.
+## Results in plain English
 
-| | LightGBM (ours) | Logistic regression | Peer-payment rule¹ | Isolation Forest |
+Out of **1,198,748** providers billing Medicare in 2021, **319** were excluded for fraud or abuse in 2022–24, or about
+**1 in 3,800**. Finding them is a needle-in-a-haystack problem.
+
+* **If investigators review the 1% of providers the model ranks riskiest (about 12,000 people), they find 17% of the
+  319 future exclusions.** Picking providers at random would find 1%. That makes the model **17× better than random**,
+  and **3.4× better than the common-sense approach** of reviewing whoever bills the most per patient compared with peers.
+* **It gives early warning.** The providers it flags were excluded a median of **26 months later**: about two years in
+  which payments could have been reviewed.
+* **It can point toward the money.** Ranking by "risk × how much Medicare paid them" puts providers holding **59%** of
+  the dollars paid to future-excluded providers into a 1% review list. (That figure leaves out two very large labs; with
+  them it's 88%.)
+* **It works year after year.** Retrained and retested on four different years (2019–2022), performance barely moves.
+* **Fairness: a problem found, and a fix.** Out of the box, the model wrongly flags honest doctors who serve many
+  low-income or disabled patients **3.4× as often** as other doctors. Removing patient-demographic information and
+  splitting the review list fairly across patient groups brings that down to **1.4×**, while still catching the same
+  number of cases.
+* **A negative result.** A deep-learning model (a transformer) that reads each provider's raw billing did *worse* than the
+  carefully designed measurements. With only a few hundred examples of fraud to learn from, domain knowledge beat raw
+  model power.
+
+> **Important caveat.** Being excluded is not the same as committing fraud, and not being excluded is not proof of
+> innocence. The model learns from whom OIG *caught*. Its scores are meant to help a human decide where to look
+> first, never to accuse anyone. This repository deliberately publishes no score for any individual provider. See the
+> [model card](MODEL_CARD.md).
+
+### The same results, in the standard metrics
+
+For readers who want the technical numbers, with 95% confidence intervals. All terms are defined in the
+[glossary](#glossary).
+
+| | LightGBM (this project) | Logistic regression | Peer-payment rule¹ | Isolation Forest |
 |---|---|---|---|---|
 | **Recall when reviewing the top 1%** | **17.2%** (13.3–21.3) | 14.1% | 5.0% | 3.4% |
 | Lift over random at 1% | **17×** | 14× | 5× | 3× |
 | ROC-AUC | **0.823** (0.800–0.850) | 0.776 | 0.582 | 0.644 |
 | Average precision (random = 0.0003) | **0.0028** | 0.0018 | 0.0005 | 0.0006 |
 
-¹ *Rank providers by payment-per-patient z-score within their specialty, i.e. what a spreadsheet audit does.*
+¹ *Rank providers by how much more they're paid per patient than others in their specialty: roughly what a spreadsheet audit would do.*
 
-* **3.4× more cases than the peer-payment rule** for the same review effort. In a paired bootstrap LightGBM beats both unsupervised
-  baselines in all 300 replicates, and logistic regression in 95% of them.
-* **Early warning.** Providers caught in the top 1% were excluded a median **26 months** after the end of the billing year scored.
-* **Money.** Re-ranking by *risk × Medicare dollars* finds the providers holding **59%** of payments to later-excluded
-  providers at a 1% budget (88% if the two largest labs are counted), versus 35% when ranking by dollars alone.
-* **Fairness.** The raw model wrongly flags providers who serve many low-income (dual-eligible) or disabled patients at
-  **3.4×** the average rate. **Dropping patient demographics and stratifying the audit queue by patient mix cuts that to
-  1.4× with no loss of recall on the test cohort** (16.9% vs 17.2%).
+In a paired bootstrap the main model beats both simple baselines in all 300 replicates, and logistic regression in 95%
+of them.
 
 ## What's in here
+
+*Everything below this point goes into more technical detail. The [glossary](#glossary) at the bottom defines the terms.*
 
 | | |
 |---|---|
@@ -57,12 +100,13 @@ Held-out test cohort: **1,198,748 providers**, of whom **319** were excluded in 
 | [Medicare Part D Prescribers — by Provider](https://data.cms.gov/provider-summary-by-type-of-service/medicare-part-d-prescribers/medicare-part-d-prescribers-by-provider) | prescribing incl. opioids, brand share, cost | ~1.1M / year |
 | [OIG List of Excluded Individuals/Entities (LEIE)](https://oig.hhs.gov/exclusions/exclusions_list.asp) | who was excluded, when, under which authority | 84k |
 
-**Label.** A provider-year is positive if the NPI appears in the LEIE under a fraud, abuse or misconduct authority
+**What counts as a "positive".** In plain terms: a provider counts as a hit if they were banned for fraud, abuse or
+misconduct within three years of the billing year the model looks at. Precisely: a provider-year is positive if the NPI appears in the LEIE under a fraud, abuse or misconduct authority
 (§1128(a)(1)–(4), §1128(b)(1)–(8), §1128A) with an exclusion date in the three calendar years after the
 feature year. Providers already excluded are dropped. See the [model card](MODEL_CARD.md) for why
 *exclusion ≠ fraud*.
 
-**Split.**
+**Split.** The model learns from older years and is graded on a newer year it never saw, the way it would actually be used.
 
 | Cohort | Feature year | Label window | Providers | Positives |
 |---|---|---|---|---|
@@ -76,7 +120,9 @@ without seeing the future.
 
 ## Features
 
-All peer comparisons are within *(year, specialty)*, using robust z-scores (median / MAD) or percentiles.
+The key idea: a large bill isn't suspicious on its own (a busy cardiologist bills a lot), but billing very differently
+from others *in the same specialty* can be. So most measurements compare each provider with their specialty peers in
+the same year. All peer comparisons are within *(year, specialty)*, using robust z-scores (median / MAD) or percentiles.
 
 | Group | Examples | Why |
 |---|---|---|
@@ -97,7 +143,9 @@ All peer comparisons are within *(year, specialty)*, using robust z-scores (medi
 
 Full tables, including per-specialty results and significance tests, are in [`reports/RESULTS.md`](reports/RESULTS.md).
 
-**Model selection matters more than model choice here.** My first pass tuned LightGBM on the single 2019 validation
+**Lesson learned: how you choose settings mattered more than which model you choose.** In plain terms: my first
+attempt tuned the model's settings against a small check set and picked settings that only looked good by luck. Testing
+settings across three larger, separate groups of providers fixed it. The details: My first pass tuned LightGBM on the single 2019 validation
 cohort, with 105 positives. Validation AP swung from 0.002 to 0.033 between configurations, the "best" one was noise, and on
 test it did *worse* than logistic regression (recall@1% 12.2% vs 14.1%). Switching to **provider-grouped 3-fold CV on
 the training cohorts** (570 positives, every configuration scored on three disjoint sets of providers) plus **balanced bagging** (each of five
@@ -111,10 +159,13 @@ git history (`Grouped-CV model selection, balanced bagging …`).
 | Later-excluded providers found | 11 | 30 | 55 | 128 |
 | Precision | 0.9% | 0.5% | 0.46% | 0.21% |
 
-A 0.5–1% hit rate sounds low, but the base rate is 0.027%. And "not excluded within 3 years" is not the same as
+In plain terms: reviewing 12,000 providers turns up 55 who were later banned. A 0.5–1% hit rate sounds low, but the base rate is 0.027%. And "not excluded within 3 years" is not the same as
 "not committing fraud", so some of the remaining flags are probably undetected cases rather than false alarms.
 
 ### What drives the score
+
+Which information helps the model most? The first chart removes one group of measurements at a time and re-scores the
+model. The second (SHAP) shows, for individual providers, which measurements pushed their risk up (right) or down (left).
 
 <p align="center"><img src="reports/figures/ablation.png" width="620"><br><img src="reports/figures/shap_summary.png" width="640"></p>
 
@@ -130,7 +181,8 @@ A 0.5–1% hit rate sounds low, but the base rate is 0.027%. And "not excluded w
 * The E/M chart above is a useful negative result. The textbook upcoding signal, "bills level 4–5 visits more than peers",
   is weak on its own: later-excluded internists and family physicians cluster at *both* extremes of the level mix.
 
-An anonymized example (values rounded so the public files can't be searched for an exact match):
+An anonymized example of why one provider who was later banned got a high score: they were a pain-management practice
+with very high opioid prescribing and a billing mix unlike their peers. Values are rounded so the public files can't be searched for an exact match.
 
 <p align="center"><img src="reports/figures/case_study.png" width="700"></p>
 
@@ -161,6 +213,9 @@ Ranking quality (AUC) is essentially constant across four years, through COVID-1
 Top-of-list recall drifts down slightly in later years, which is worth monitoring if this were deployed.
 
 ### Can a neural network learn this from raw billing lines?
+
+In plain terms: instead of hand-designing 86 measurements, can a modern deep-learning model work out what matters by
+reading each provider's raw list of billed services? Here, no. It needs far more examples of fraud than exist.
 
 The **ClaimSet Transformer** (`src/fraudml/deep.py`) treats each provider-year as an unordered set of up to 32 billing
 lines: HCPCS embedding, place of service, and 9 numeric features such as volume, price, and intensity vs. peers. A
@@ -203,7 +258,9 @@ false-positive rate relative to the overall rate.
 
 <p align="center"><img src="reports/figures/fairness_tradeoff.png" width="560"></p>
 
-**Mitigation: stratified audit allocation.** Each provider's score is blended with its percentile *within its
+**The fix: a fairer review list.** In plain terms: instead of one ranking across everyone, providers are also ranked
+*within groups of similar patient populations*, and the review list draws from every group. A dial, α, sets how much
+weight goes to the within-group ranking (0 = none, 1 = every group reviewed at the same rate). Precisely: each provider's score is blended with its percentile *within its
 patient-mix stratum* (dual-eligible quartile × disabled quartile, 25 strata). At α = 1 every stratum is reviewed at the same
 rate.
 
@@ -264,6 +321,43 @@ reports/         RESULTS.md, results JSON, figures
 docs/            interactive results page (GitHub Pages)
 tests/           unit tests on synthetic data
 ```
+
+## Glossary
+
+**Medicare / healthcare terms**
+
+| Term | Meaning |
+|---|---|
+| **CMS** | Centers for Medicare & Medicaid Services, the agency that runs Medicare and publishes the billing data used here. |
+| **OIG** | HHS Office of Inspector General, the watchdog that investigates fraud and decides exclusions. |
+| **Exclusion / LEIE** | A ban on billing federal health programs. The LEIE (List of Excluded Individuals/Entities) is OIG's public list of them. |
+| **NPI** | National Provider Identifier, a unique ID number for every provider. Used to link billing data to the exclusion list. |
+| **Part B / Part D** | Part B pays for doctor visits and outpatient services; Part D pays for prescription drugs. |
+| **HCPCS code** | The standardized code for each billable service (e.g. 99213 = a routine office visit). |
+| **E/M visit levels, upcoding** | Office visits are billed at levels 1–5; higher levels pay more. *Upcoding* means billing a higher level than the visit justified. |
+| **Dual-eligible** | Patients who qualify for both Medicare and Medicaid, a standard marker of low income. |
+| **Under-65 patients** | People on Medicare before 65 are almost always there because of a disability. |
+| **Specialty / peers** | Providers are compared with others who declared the same specialty, because a normal bill for a cardiologist looks nothing like one for a chiropractor. |
+
+**Machine-learning terms**
+
+| Term | Meaning |
+|---|---|
+| **Training / test data** | The model learns from training data (2016–2019) and is graded on test data it never saw (2021 billing → 2022–24 exclusions). |
+| **Feature** | One measurement the model sees per provider, e.g. "payment per patient compared with peers". |
+| **Recall at 1%** | Of all providers who were later excluded, the share that appear in the model's top 1% of risk. The most practical number here. |
+| **Precision** | Of the providers flagged, the share who were later excluded. |
+| **Lift** | How many times better than random picking. 17× means 17 times as many hits as choosing providers at random. |
+| **ROC-AUC** | Chance the model ranks a randomly chosen later-excluded provider above a randomly chosen other provider. 0.5 = coin flip, 1.0 = perfect. |
+| **Average precision (AP)** | A summary of precision across all cut-offs. Looks tiny here because only 0.027% of providers are positive; compare it with the random baseline of 0.0003. |
+| **False-positive rate (FPR)** | Among providers who were *not* later excluded, the share the model flagged anyway, i.e. honest providers sent for review. |
+| **Confidence interval (CI)** | The range the true value plausibly falls in, given the limited number of cases. Computed by bootstrap resampling. |
+| **LightGBM** | A widely used gradient-boosted decision-tree model, strong on tabular data. |
+| **Logistic regression, Isolation Forest** | Simpler baselines: a linear model, and an anomaly detector that uses no fraud labels at all. |
+| **Cross-validation (CV)** | Repeatedly training on part of the data and checking on the rest, to choose settings without touching the test set. |
+| **SHAP** | A method that explains which features pushed a given prediction up or down. |
+| **Ablation** | Removing a group of features and re-measuring, to see how much they matter. |
+| **Transformer** | The neural-network architecture behind modern AI models; here applied to a provider's list of billed services. |
 
 ## License & data use
 
