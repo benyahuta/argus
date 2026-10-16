@@ -17,7 +17,8 @@ from fraudml.config import ARTIFACTS, REPORTS, ROOT
 SMOKE = os.environ.get("SMOKE") == "1"
 SRC = ARTIFACTS / "smoke" if SMOKE else ARTIFACTS
 RES = (ARTIFACTS / "smoke" if SMOKE else REPORTS)
-MODELS = ["LightGBM (ours)", "Logistic regression", "Isolation Forest", "Peer payment rule"]
+MODELS = ["LightGBM (ours)", "LightGBM + LR blend", "Logistic regression", "Isolation Forest",
+          "Peer payment rule"]
 BUDGETS = np.unique(np.round(np.logspace(np.log10(0.0005), np.log10(0.10), 120), 6))
 
 

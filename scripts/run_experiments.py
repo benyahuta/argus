@@ -27,7 +27,7 @@ from fraudml.models import (
     predict_ensemble,
     rule_score,
     to_pandas,
-    tune_gbm,
+    tune_gbm_cv,
 )
 
 # Features describing *who the patients are* rather than *how the provider bills*.
@@ -86,11 +86,18 @@ def main() -> None:
     scores["Logistic regression"] = logistic(X_trva, y_trva, X["te"], seed=EXP.seed)
 
     # ------------------------------------------------------------------ LightGBM
-    log("tuning LightGBM on the 2019 validation cohort")
-    tuned = tune_gbm(X["tr"], y_tr, X["va"], y_va, n_trials=2 if SMOKE else 16, seed=EXP.seed,
-                     log=log)
-    log(f"best valid AP {tuned.valid_ap:.4f} at {tuned.best_iter} iters")
-    results["tuning"] = {"best_valid_ap": tuned.valid_ap, "best_iter": tuned.best_iter,
+    log("tuning LightGBM with provider-grouped 3-fold CV on the training cohorts")
+    tuned = tune_gbm_cv(X["tr"], y_tr, tr["npi"].to_numpy(), n_trials=2 if SMOKE else 16,
+                        seed=EXP.seed, log=log)
+    log(f"best CV AP {tuned.cv_ap:.4f} at {tuned.best_iter} iters")
+    # Sanity check on the later 2019 cohort (reported, not used for selection).
+    chk = predict_ensemble(fit_gbm_ensemble(tuned.params, tuned.best_iter, X["tr"], y_tr,
+                                            seeds=(0,)), X["va"])
+    valid_ap = float(average_precision_score(y_va, chk))
+    log(f"2019 validation AP of the selected config: {valid_ap:.4f}")
+    results["tuning"] = {"method": "provider-grouped 3-fold CV on train cohorts",
+                         "best_cv_ap": tuned.cv_ap, "best_iter": tuned.best_iter,
+                         "valid_2019_ap": valid_ap,
                          "params": {k: v for k, v in tuned.params.items() if k != "verbose"},
                          "trials": tuned.trials}
     # Refit on train+valid (labels end 2021, before any test label) with ~20% more rounds
@@ -99,6 +106,10 @@ def main() -> None:
     log("fitting 5-seed LightGBM ensemble on train+valid")
     gbm = fit_gbm_ensemble(tuned.params, n_iter, X_trva, y_trva)
     scores["LightGBM (ours)"] = predict_ensemble(gbm, X["te"])
+    # Pre-specified blend: average of the two supervised models' percentile ranks.
+    scores["LightGBM + LR blend"] = (pd.Series(scores["LightGBM (ours)"]).rank(pct=True)
+                                     + pd.Series(scores["Logistic regression"]).rank(pct=True)
+                                     ).to_numpy() / 2
     for i, m in enumerate(gbm):
         m.save_model(str(ARTIFACTS / f"lgbm_seed{i}.txt"))
 

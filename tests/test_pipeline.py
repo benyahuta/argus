@@ -101,3 +101,31 @@ def test_build_year_end_to_end():
     assert not missing
     # Specialty is recoverable from the synthetic code mix, so surprise should be low.
     assert out["mismatch_surprise"].median() < 1.0
+
+
+def test_claimset_transformer_forward():
+    torch = pytest.importorskip("torch")
+    from fraudml.deep import LINE_NUM, MAX_LINES, ClaimSetTransformer
+
+    m = ClaimSetTransformer(n_codes=50, n_specialties=5, n_aux=4, n_prov=3, d=16, heads=2,
+                            layers=1)
+    b = 6
+    codes = torch.randint(3, 50, (b, MAX_LINES))
+    mask = torch.zeros(b, MAX_LINES, dtype=torch.bool)
+    mask[:, :4] = True
+    codes[~mask] = 0
+    logit, aux = m(codes, torch.ones(b, MAX_LINES, dtype=torch.int8),
+                   torch.randn(b, MAX_LINES, len(LINE_NUM)), mask,
+                   torch.zeros(b, dtype=torch.long), torch.randn(b, 3),
+                   torch.zeros(b, dtype=torch.long))
+    assert logit.shape == (b,) and aux.shape == (b, 4)
+    # Padding lines must not change the output.
+    codes2 = codes.clone()
+    codes2[:, 10] = 7
+    m.eval()
+    with torch.no_grad():
+        a = m.encode(codes, torch.ones(b, MAX_LINES, dtype=torch.int8),
+                     torch.zeros(b, MAX_LINES, len(LINE_NUM)), mask)[0]
+        c = m.encode(codes2, torch.ones(b, MAX_LINES, dtype=torch.int8),
+                     torch.zeros(b, MAX_LINES, len(LINE_NUM)), mask)[0]
+    assert torch.allclose(a, c, atol=1e-5)

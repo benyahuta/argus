@@ -15,6 +15,10 @@ dependencies = [
     "scipy>=1.18.1",
     "seaborn>=0.13.2",
     "shap>=0.53.0",
+]
+
+[project.optional-dependencies]
+deep = [
     "torch>=2.14.1",
 ]
 

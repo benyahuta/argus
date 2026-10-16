@@ -622,6 +622,10 @@ dependencies = [
     { name = "scipy" },
     { name = "seaborn" },
     { name = "shap" },
+]
+
+[package.optional-dependencies]
+deep = [
     { name = "torch" },
 ]
 
@@ -644,8 +648,9 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.18.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "shap", specifier = ">=0.53.0" },
-    { name = "torch", specifier = ">=2.14.1" },
+    { name = "torch", marker = "extra == 'deep'", specifier = ">=2.14.1" },
 ]
+provides-extras = ["deep"]
 
 [package.metadata.requires-dev]
 dev = [
